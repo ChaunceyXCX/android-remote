@@ -215,10 +215,12 @@ body {
     margin-top: -16px;
 }
 
-.screenshot-inline {
-    margin-top: 16px;
-    padding-top: 16px;
-    border-top: 1px solid var(--border);
+.screenshot-section {
+    background: var(--surface);
+    padding: 20px;
+    border-radius: var(--radius);
+    margin-bottom: 30px;
+    border: 1px solid var(--border);
 }
 
 .input-group {
