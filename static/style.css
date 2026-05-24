@@ -171,12 +171,26 @@ body {
     gap: 12px;
 }
 
-.connection-status-text {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
+.connection-status-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
     padding: 4px 10px;
     background: var(--background);
     border-radius: var(--radius-sm);
+}
+
+.connection-status-text {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+}
+
+.connection-status-detail {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    opacity: 0.8;
 }
 
 .connection-toggle-icon {

@@ -31,6 +31,7 @@ class AndroidRemote {
             connectionSection: document.getElementById('connectionSection'),
             connectionHeader: document.getElementById('connectionHeader'),
             connectionStatusText: document.getElementById('connectionStatusText'),
+            connectionStatusDetail: document.getElementById('connectionStatusDetail'),
             deviceDisplayName: document.getElementById('deviceDisplayName'),
             deviceModel: document.getElementById('deviceModel'),
             androidVersion: document.getElementById('androidVersion'),
@@ -246,10 +247,15 @@ class AndroidRemote {
 
         if (data.connected) {
             statusDot.classList.add('connected');
-            statusText.textContent = '已连接';
+            statusText.textContent = i18nInstance.t('connected');
             if (this.elements.connectionStatusText) {
-                this.elements.connectionStatusText.textContent = data.model || '已连接';
+                const mainText = data.note || data.model || '-';
+                const detailText = data.ip || '';
+                this.elements.connectionStatusText.textContent = mainText;
                 this.elements.connectionStatusText.style.color = 'var(--success)';
+                if (this.elements.connectionStatusDetail) {
+                    this.elements.connectionStatusDetail.textContent = detailText;
+                }
             }
             const displayName = data.note || data.model || data.deviceId || '-';
             this.elements.deviceDisplayName.textContent = displayName;
@@ -258,10 +264,13 @@ class AndroidRemote {
             this.elements.deviceIPDisplay.textContent = data.ip || '-';
         } else {
             statusDot.classList.remove('connected');
-            statusText.textContent = '未连接';
+            statusText.textContent = i18nInstance.t('disconnected');
             if (this.elements.connectionStatusText) {
-                this.elements.connectionStatusText.textContent = '未连接';
+                this.elements.connectionStatusText.textContent = i18nInstance.t('disconnected');
                 this.elements.connectionStatusText.style.color = 'var(--text-secondary)';
+                if (this.elements.connectionStatusDetail) {
+                    this.elements.connectionStatusDetail.textContent = '';
+                }
             }
             this.elements.deviceDisplayName.textContent = '-';
             this.elements.deviceModel.textContent = '-';
