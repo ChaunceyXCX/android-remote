@@ -157,6 +157,7 @@ func main() {
 	mux.HandleFunc("/api/device/switch", handleDeviceSwitch)
 	mux.HandleFunc("/api/device/switch-mode", handleDeviceSwitchMode)
 	mux.HandleFunc("/api/device/note", handleDeviceNote)
+	mux.HandleFunc("/api/media/status", handleMediaStatus)
 	
 	fs := http.FileServer(http.Dir("./static"))
 	mux.Handle("/", fs)
@@ -786,6 +787,31 @@ func handleDeviceSwitchMode(w http.ResponseWriter, r *http.Request) {
 	} else {
 		sendJSON(w, http.StatusBadRequest, APIResponse{Error: "无效的切换模式"})
 	}
+}
+
+type MediaStatus struct {
+	Playing bool   `json:"playing"`
+	Package string `json:"package,omitempty"`
+}
+
+func handleMediaStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		sendJSON(w, http.StatusMethodNotAllowed, MediaStatus{})
+		return
+	}
+
+	output, err := executeADB("shell", "dumpsys", "media_session")
+	if err != nil {
+		sendJSON(w, http.StatusOK, MediaStatus{Playing: false})
+		return
+	}
+
+	playing := false
+	if strings.Contains(output, "state=3") {
+		playing = true
+	}
+
+	sendJSON(w, http.StatusOK, MediaStatus{Playing: playing})
 }
 
 func sendJSON(w http.ResponseWriter, statusCode int, data interface{}) {

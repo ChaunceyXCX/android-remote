@@ -20,6 +20,7 @@ class AndroidRemote {
         this.initConnectionToggle();
         this.initSwipe();
         this.initI18n();
+        this.initMediaStatusPolling();
     }
 
     bindElements() {
@@ -62,7 +63,8 @@ class AndroidRemote {
             swipeBtn: document.getElementById('swipeBtn'),
             toast: document.getElementById('toast'),
             swipePanels: document.getElementById('swipePanels'),
-            swipeDots: document.getElementById('swipeDots')
+            swipeDots: document.getElementById('swipeDots'),
+            playPauseBtn: document.querySelector('[data-key="playpause"]')
         };
     }
 
@@ -144,6 +146,34 @@ class AndroidRemote {
             });
         }
         i18nInstance.updatePageTexts();
+    }
+
+    initMediaStatusPolling() {
+        this.checkMediaStatus();
+        setInterval(() => this.checkMediaStatus(), 3000);
+    }
+
+    async checkMediaStatus() {
+        try {
+            const response = await fetch('/api/media/status');
+            const data = await response.json();
+            this.updatePlayPauseIcon(data.playing);
+        } catch (error) {
+        }
+    }
+
+    updatePlayPauseIcon(isPlaying) {
+        const btn = this.elements.playPauseBtn;
+        if (!btn) return;
+        
+        const icon = btn.querySelector('i');
+        if (!icon) return;
+
+        if (isPlaying) {
+            icon.className = 'fas fa-pause';
+        } else {
+            icon.className = 'fas fa-play';
+        }
     }
 
     initSwipe() {
