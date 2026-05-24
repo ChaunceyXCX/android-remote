@@ -1,0 +1,14 @@
+[Unit]
+Description=Android Remote Control Service
+After=network.target
+
+[Service]
+Type=simple
+User=chauncey
+WorkingDirectory=/home/chauncey/MyProject/android-remote
+ExecStart=/home/chauncey/MyProject/android-remote/android-remote
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

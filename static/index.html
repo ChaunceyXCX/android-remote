@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Remote</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fab fa-android"></i>
+                <h1>Android Remote</h1>
+            </div>
+            <div class="header-right">
+                <button id="langToggle" class="lang-toggle">EN</button>
+                <div class="status" id="deviceStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">未连接</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content">
+            <section class="connection-section" id="connectionSection">
+                <div class="section-header" id="connectionHeader">
+                    <div class="section-header-left">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>设备管理</span>
+                    </div>
+                    <div class="section-header-right">
+                        <span class="connection-status-text" id="connectionStatusText">未连接</span>
+                        <i class="fas fa-chevron-down connection-toggle-icon"></i>
+                    </div>
+                </div>
+                <div class="connection-section-content" id="connectionContent">
+                <div class="input-group">
+                    <input type="text" id="deviceIP" placeholder="设备IP地址或IP:端口 (例如: 192.168.1.100:5555)" class="input-field">
+                    <button id="connectBtn" class="btn btn-primary">
+                        <i class="fas fa-link"></i>
+                        连接
+                    </button>
+                    <button id="refreshDevicesBtn" class="btn btn-secondary">
+                        <i class="fas fa-sync-alt"></i>
+                        刷新设备
+                    </button>
+                </div>
+                <div class="connection-tip">
+                    <i class="fas fa-info-circle"></i>
+                    <span>无线ADB连接前，请确保在安卓设备的开发者选项中开启"无线调试"，并勾选"永久允许"该电脑进行调试</span>
+                </div>
+                <div class="device-list" id="deviceList">
+                    <div class="device-list-header">
+                        <h3>已连接设备</h3>
+                        <button class="device-list-toggle" id="deviceListToggle" aria-label="折叠/展开设备列表">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                    </div>
+                    <div class="device-list-content" id="deviceListContent">
+                        <div class="device-item-empty">暂无设备连接</div>
+                    </div>
+                </div>
+                <div class="device-info" id="deviceInfo">
+                    <div class="info-item info-item-main">
+                        <span class="info-label">设备</span>
+                        <span class="info-value info-value-main" id="deviceDisplayName">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">型号</span>
+                        <span class="info-value" id="deviceModel">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Android</span>
+                        <span class="info-value" id="androidVersion">-</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">IP</span>
+                        <span class="info-value" id="deviceIPDisplay">-</span>
+                    </div>
+                </div>
+                <div class="screenshot-inline">
+                    <div class="screenshot-controls">
+                        <div class="screenshot-header">
+                            <button id="screenshotBtn" class="btn btn-primary">
+                                <i class="fas fa-camera"></i>
+                                截图
+                            </button>
+                            <label class="toggle-label">
+                                <input type="checkbox" id="clickToTap" checked>
+                                <span>点击截图直接触摸</span>
+                            </label>
+                        </div>
+                        <div class="screenshot-preview" id="screenshotPreview">
+                            <img id="screenshotImage" src="" alt="截图预览" style="display: none;">
+                            <div class="placeholder" id="screenshotPlaceholder">
+                                <i class="fas fa-image"></i>
+                                <span>截图将显示在这里</span>
+                            </div>
+                            <div class="click-indicator" id="clickIndicator"></div>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </section>
+
+            <div class="controls-grid">
+                <div class="swipe-panels" id="swipePanels">
+                    <div class="swipe-panel" data-panel="0">
+                        <section class="control-section navigation">
+                            <h2 class="section-title">导航控制</h2>
+                            <div class="nav-controls">
+                                <button class="btn btn-icon" data-key="back" title="返回">
+                                    <i class="fas fa-arrow-left"></i>
+                                </button>
+                                <div class="dpad">
+                                    <button class="btn btn-icon" data-key="up" title="上">
+                                        <i class="fas fa-chevron-up"></i>
+                                    </button>
+                                    <button class="btn btn-icon btn-center" data-key="center" title="确认">
+                                        <i class="fas fa-circle"></i>
+                                    </button>
+                                    <button class="btn btn-icon" data-key="down" title="下">
+                                        <i class="fas fa-chevron-down"></i>
+                                    </button>
+                                    <button class="btn btn-icon" data-key="left" title="左">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                    <button class="btn btn-icon" data-key="right" title="右">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </div>
+                                <button class="btn btn-icon" data-key="home" title="主页">
+                                    <i class="fas fa-home"></i>
+                                </button>
+                            </div>
+                            <div class="extra-nav">
+                                <button class="btn btn-small" data-key="menu" title="菜单">
+                                    <i class="fas fa-bars"></i>
+                                    菜单
+                                </button>
+                                <button class="btn btn-small" data-key="search" title="搜索">
+                                    <i class="fas fa-search"></i>
+                                    搜索
+                                </button>
+                            </div>
+                        </section>
+
+                        <section class="control-section media">
+                            <h2 class="section-title">媒体控制</h2>
+                            <div class="media-controls">
+                                <button class="btn btn-icon" data-key="previous" title="上一曲">
+                                    <i class="fas fa-step-backward"></i>
+                                </button>
+                                <button class="btn btn-icon btn-play" data-key="playpause" title="播放/暂停">
+                                    <i class="fas fa-play"></i>
+                                </button>
+                                <button class="btn btn-icon" data-key="next" title="下一曲">
+                                    <i class="fas fa-step-forward"></i>
+                                </button>
+                            </div>
+                            <div class="volume-controls">
+                                <button class="btn btn-icon" data-key="volumedown" title="音量减">
+                                    <i class="fas fa-volume-down"></i>
+                                </button>
+                                <button class="btn btn-icon" data-key="mute" title="静音">
+                                    <i class="fas fa-volume-mute"></i>
+                                </button>
+                                <button class="btn btn-icon" data-key="volumeup" title="音量加">
+                                    <i class="fas fa-volume-up"></i>
+                                </button>
+                            </div>
+                        </section>
+
+                        <section class="control-section power">
+                            <h2 class="section-title">电源控制</h2>
+                            <div class="power-controls">
+                                <button class="btn btn-power" data-key="power" title="电源">
+                                    <i class="fas fa-power-off"></i>
+                                </button>
+                                <button class="btn btn-small" data-key="brightnessup" title="亮度增">
+                                    <i class="fas fa-sun"></i>
+                                    亮度+
+                                </button>
+                                <button class="btn btn-small" data-key="brightnessdown" title="亮度减">
+                                    <i class="fas fa-moon"></i>
+                                    亮度-
+                                </button>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="swipe-panel" data-panel="1">
+                        <section class="control-section input">
+                            <h2 class="section-title">文本输入</h2>
+                            <div class="input-controls">
+                                <input type="text" id="textInput" placeholder="输入要发送的文本..." class="input-field">
+                                <button id="sendTextBtn" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i>
+                                    发送
+                                </button>
+                            </div>
+                        </section>
+
+                        <section class="control-section apps">
+                            <h2 class="section-title">应用管理</h2>
+                            <div class="app-controls">
+                                <div class="app-input-group">
+                                    <input type="text" id="packageName" placeholder="应用包名" class="input-field">
+                                    <button id="startAppBtn" class="btn btn-success">
+                                        <i class="fas fa-play"></i>
+                                        启动
+                                    </button>
+                                    <button id="stopAppBtn" class="btn btn-danger">
+                                        <i class="fas fa-stop"></i>
+                                        停止
+                                    </button>
+                                </div>
+                                <button id="listAppsBtn" class="btn btn-secondary">
+                                    <i class="fas fa-list"></i>
+                                    获取应用列表
+                                </button>
+                                <div class="app-list" id="appList"></div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <div class="swipe-panel" data-panel="2">
+                        <section class="control-section touch">
+                            <h2 class="section-title">触摸模拟</h2>
+                            <div class="touch-controls">
+                                <div class="touch-inputs">
+                                    <div class="touch-input">
+                                        <label>X坐标</label>
+                                        <input type="number" id="tapX" placeholder="X" class="input-field">
+                                    </div>
+                                    <div class="touch-input">
+                                        <label>Y坐标</label>
+                                        <input type="number" id="tapY" placeholder="Y" class="input-field">
+                                    </div>
+                                    <button id="tapBtn" class="btn btn-primary">
+                                        <i class="fas fa-hand-pointer"></i>
+                                        点击
+                                    </button>
+                                </div>
+                                <div class="swipe-inputs">
+                                    <div class="swipe-input">
+                                        <label>起点X</label>
+                                        <input type="number" id="swipeX1" placeholder="X1" class="input-field">
+                                    </div>
+                                    <div class="swipe-input">
+                                        <label>起点Y</label>
+                                        <input type="number" id="swipeY1" placeholder="Y1" class="input-field">
+                                    </div>
+                                    <div class="swipe-input">
+                                        <label>终点X</label>
+                                        <input type="number" id="swipeX2" placeholder="X2" class="input-field">
+                                    </div>
+                                    <div class="swipe-input">
+                                        <label>终点Y</label>
+                                        <input type="number" id="swipeY2" placeholder="Y2" class="input-field">
+                                    </div>
+                                    <button id="swipeBtn" class="btn btn-primary">
+                                        <i class="fas fa-arrows-alt-h"></i>
+                                        滑动
+                                    </button>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+                <div class="swipe-dots" id="swipeDots">
+                    <span class="swipe-dot active" data-dot="0"></span>
+                    <span class="swipe-dot" data-dot="1"></span>
+                    <span class="swipe-dot" data-dot="2"></span>
+                </div>
+            </div>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <span>Android Remote Control</span>
+                <span class="separator">|</span>
+                <span>ADB命令转发</span>
+            </div>
+        </footer>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script src="i18n.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
