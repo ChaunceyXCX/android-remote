@@ -200,9 +200,9 @@ body {
 
 .connection-section {
     background: var(--surface);
-    padding: 24px;
+    padding: 16px;
     border-radius: var(--radius);
-    margin-bottom: 30px;
+    margin-bottom: 12px;
     border: 1px solid var(--border);
 }
 
@@ -279,9 +279,9 @@ body {
 
 .screenshot-section {
     background: var(--surface);
-    padding: 20px;
+    padding: 16px;
     border-radius: var(--radius);
-    margin-bottom: 30px;
+    margin-bottom: 12px;
     border: 1px solid var(--border);
 }
 
@@ -466,7 +466,7 @@ body {
     background: var(--background);
     border-radius: var(--radius-sm);
     border: 1px solid var(--border);
-    margin-bottom: 20px;
+    margin-bottom: 0;
     overflow: hidden;
 }
 
@@ -517,8 +517,6 @@ body {
 }
 
 .device-list-content {
-    max-height: 300px;
-    overflow-y: auto;
     transition: max-height 0.3s ease, opacity 0.3s ease;
 }
 
