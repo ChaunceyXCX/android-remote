@@ -1,11 +1,9 @@
 const i18n = {
     zh: {
-        // Header
         appTitle: 'Android Remote',
         connected: '已连接',
         disconnected: '未连接',
 
-        // Connection Section
         deviceManagement: '设备管理',
         ipPlaceholder: '设备IP地址或IP:端口 (例如: 192.168.1.100:5555)',
         connect: '连接',
@@ -15,16 +13,18 @@ const i18n = {
         noDevices: '暂无设备连接',
         device: '设备',
         model: '型号',
+        androidVersion: 'Android',
         ip: 'IP',
         addNote: '备注...',
         toWireless: '→ 无线',
         toUSB: '→ USB',
 
-        // Control Sections
         navigation: '导航控制',
         back: '返回',
         home: '主页',
         recent: '最近',
+        menu: '菜单',
+        search: '搜索',
         up: '上',
         down: '下',
         left: '左',
@@ -53,55 +53,75 @@ const i18n = {
         start: '启动',
         stop: '停止',
         getAppList: '获取应用列表',
+        noAppFound: '未找到应用',
 
         screenshot: '屏幕截图',
         takeScreenshot: '截图',
+        screenshoting: '截图中...',
         clickToTap: '点击截图直接触摸',
+        screenshotPreview: '截图预览',
         screenshotPlaceholder: '截图将显示在这里',
 
         touchSimulator: '触摸模拟',
         xCoord: 'X坐标',
         yCoord: 'Y坐标',
+        startX: '起点X',
+        startY: '起点Y',
+        endX: '终点X',
+        endY: '终点Y',
         tap: '点击',
         swipe: '滑动',
-        swipeStart: '起点',
-        swipeEnd: '终点',
 
-        // Toast messages
+        footerTitle: 'Android Remote Control',
+        footerDesc: 'ADB命令转发',
+
         enterIP: '请输入设备IP地址',
-        connecting: '连接中...',
-        connected_success: '已连接',
         connectionFailed: '连接失败',
-        enterText: '请输入文本',
-        textSent: '文本已发送',
-        enterPackage: '请输入包名',
-        appStarted: '应用已启动',
-        appStopped: '应用已停止',
+        connectionRequestFailed: '连接请求失败',
+        keySendFailed: '按键发送失败',
+        keyRequestFailed: '按键请求失败',
+        enterText: '请输入要发送的文本',
+        textSendFailed: '文本发送失败',
+        textRequestFailed: '文本请求失败',
+        enterPackage: '请输入应用包名',
+        appStartFailed: '应用启动失败',
+        appStopFailed: '应用停止失败',
+        appStartRequestFailed: '启动请求失败',
+        appStopRequestFailed: '停止请求失败',
+        getAppListFailed: '获取应用列表失败',
+        getAppListRequestFailed: '列表请求失败',
         screenshotSuccess: '截图成功（点击图片可直接触摸）',
         screenshotFailed: '截图失败',
-        enterCoords: '请输入有效的坐标',
-        tapSuccess: '点击成功',
-        swipeSuccess: '滑动成功',
+        screenshotRequestFailed: '截图请求失败',
+        coordFilled: '坐标已填入',
+        tapAt: '点击',
+        tapFailed: '点击失败',
+        tapRequestFailed: '点击请求失败',
+        enterValidCoords: '请输入有效的坐标',
+        swipeFailed: '滑动失败',
+        swipeRequestFailed: '滑动请求失败',
         noteSaved: '备注已保存',
-        switchedTo: '已切换到设备',
+        noteSaveFailed: '保存失败',
+        noteSaveRequestFailed: '保存备注失败',
+        switchedToDevice: '已切换到设备',
+        switchFailed: '切换失败',
+        switchRequestFailed: '切换请求失败',
         switchingToWireless: '正在切换到无线模式...',
         switchingToUSB: '正在切换到USB模式...',
         switchedToWireless: '已切换到无线模式',
         switchedToUSB: '已切换到USB模式',
+        switchModeFailed: '切换失败',
 
-        // Swipe indicators
         navMedia: '导航/媒体',
         inputApps: '输入/应用',
-        touch: '触摸'
+        touchControl: '触摸'
     },
 
     en: {
-        // Header
         appTitle: 'Android Remote',
         connected: 'Connected',
         disconnected: 'Disconnected',
 
-        // Connection Section
         deviceManagement: 'Device Management',
         ipPlaceholder: 'Device IP or IP:port (e.g., 192.168.1.100:5555)',
         connect: 'Connect',
@@ -111,16 +131,18 @@ const i18n = {
         noDevices: 'No devices connected',
         device: 'Device',
         model: 'Model',
+        androidVersion: 'Android',
         ip: 'IP',
         addNote: 'Note...',
         toWireless: '→ Wireless',
         toUSB: '→ USB',
 
-        // Control Sections
         navigation: 'Navigation',
         back: 'Back',
         home: 'Home',
         recent: 'Recent',
+        menu: 'Menu',
+        search: 'Search',
         up: 'Up',
         down: 'Down',
         left: 'Left',
@@ -149,46 +171,68 @@ const i18n = {
         start: 'Start',
         stop: 'Stop',
         getAppList: 'Get App List',
+        noAppFound: 'No app found',
 
         screenshot: 'Screenshot',
         takeScreenshot: 'Screenshot',
+        screenshoting: 'Taking...',
         clickToTap: 'Click to tap',
+        screenshotPreview: 'Screenshot Preview',
         screenshotPlaceholder: 'Screenshot will appear here',
 
         touchSimulator: 'Touch Simulator',
         xCoord: 'X',
         yCoord: 'Y',
+        startX: 'Start X',
+        startY: 'Start Y',
+        endX: 'End X',
+        endY: 'End Y',
         tap: 'Tap',
         swipe: 'Swipe',
-        swipeStart: 'Start',
-        swipeEnd: 'End',
 
-        // Toast messages
+        footerTitle: 'Android Remote Control',
+        footerDesc: 'ADB Command Forwarding',
+
         enterIP: 'Please enter device IP',
-        connecting: 'Connecting...',
-        connected_success: 'Connected',
         connectionFailed: 'Connection failed',
-        enterText: 'Please enter text',
-        textSent: 'Text sent',
+        connectionRequestFailed: 'Connection request failed',
+        keySendFailed: 'Key send failed',
+        keyRequestFailed: 'Key request failed',
+        enterText: 'Please enter text to send',
+        textSendFailed: 'Text send failed',
+        textRequestFailed: 'Text request failed',
         enterPackage: 'Please enter package name',
-        appStarted: 'App started',
-        appStopped: 'App stopped',
+        appStartFailed: 'App start failed',
+        appStopFailed: 'App stop failed',
+        appStartRequestFailed: 'Start request failed',
+        appStopRequestFailed: 'Stop request failed',
+        getAppListFailed: 'Get app list failed',
+        getAppListRequestFailed: 'List request failed',
         screenshotSuccess: 'Screenshot taken (click image to tap)',
         screenshotFailed: 'Screenshot failed',
-        enterCoords: 'Please enter valid coordinates',
-        tapSuccess: 'Tap executed',
-        swipeSuccess: 'Swipe executed',
+        screenshotRequestFailed: 'Screenshot request failed',
+        coordFilled: 'Coord filled',
+        tapAt: 'Tap at',
+        tapFailed: 'Tap failed',
+        tapRequestFailed: 'Tap request failed',
+        enterValidCoords: 'Please enter valid coordinates',
+        swipeFailed: 'Swipe failed',
+        swipeRequestFailed: 'Swipe request failed',
         noteSaved: 'Note saved',
-        switchedTo: 'Switched to device',
+        noteSaveFailed: 'Save failed',
+        noteSaveRequestFailed: 'Note save failed',
+        switchedToDevice: 'Switched to device',
+        switchFailed: 'Switch failed',
+        switchRequestFailed: 'Switch request failed',
         switchingToWireless: 'Switching to wireless...',
         switchingToUSB: 'Switching to USB...',
-        switchedToWireless: 'Switched to wireless mode',
-        switchedToUSB: 'Switched to USB mode',
+        switchedToWireless: 'Switched to wireless',
+        switchedToUSB: 'Switched to USB',
+        switchModeFailed: 'Switch failed',
 
-        // Swipe indicators
         navMedia: 'Nav/Media',
         inputApps: 'Input/Apps',
-        touch: 'Touch'
+        touchControl: 'Touch'
     }
 };
 
@@ -215,16 +259,31 @@ class I18n {
     }
 
     updatePageTexts() {
-        // Header
-        this.setText('appTitle', 'appTitle');
-        this.setText('.status-text', 'disconnected', true);
+        const statusText = document.querySelector('.status-text');
+        if (statusText) {
+            const isConnected = statusText.textContent === this.translations.zh.connected || 
+                               statusText.textContent === this.translations.en.connected;
+            statusText.textContent = isConnected ? this.t('connected') : this.t('disconnected');
+        }
 
-        // Connection section
+        this.setTextBySelector('.section-header-left span', 'deviceManagement');
         this.setPlaceholder('deviceIP', 'ipPlaceholder');
-        this.setText('#connectBtn', 'connect');
-        this.setText('#refreshDevicesBtn', 'refreshDevices');
+        this.setTextById('connectBtn', 'connect');
+        this.setTextById('refreshDevicesBtn', 'refreshDevices');
+        this.setTextBySelector('.connection-tip span', 'connectionTip');
+        this.setTextBySelector('.device-list-header h3', 'connectedDevices');
+        this.setTextBySelector('.device-item-empty', 'noDevices');
 
-        // Section titles
+        const infoLabels = document.querySelectorAll('.info-label');
+        const labelKeys = ['device', 'model', 'androidVersion', 'ip'];
+        infoLabels.forEach((el, i) => {
+            if (labelKeys[i]) el.textContent = this.t(labelKeys[i]);
+        });
+
+        this.setTextById('screenshotBtn', 'takeScreenshot');
+        this.setTextBySelector('.toggle-label span', 'clickToTap');
+        this.setTextBySelector('.screenshot-preview .placeholder span', 'screenshotPlaceholder');
+
         const sections = {
             '.navigation .section-title': 'navigation',
             '.media .section-title': 'mediaControl',
@@ -233,46 +292,75 @@ class I18n {
             '.apps .section-title': 'appManagement',
             '.touch .section-title': 'touchSimulator'
         };
-
         for (const [selector, key] of Object.entries(sections)) {
-            const el = document.querySelector(selector);
-            if (el) el.textContent = this.t(key);
+            this.setTextBySelector(selector, key);
         }
 
-        // Buttons with data-key attributes
         const keyButtons = {
-            'back': 'back',
-            'home': 'home',
-            'recent': 'recent',
-            'up': 'up',
-            'down': 'down',
-            'left': 'left',
-            'right': 'right',
-            'center': 'confirm',
-            'previous': 'previous',
-            'playpause': 'playPause',
-            'next': 'next',
-            'volumedown': 'volumeDown',
-            'mute': 'mute',
-            'volumeup': 'volumeUp',
-            'power': 'power',
-            'brightnessup': 'brightnessUp',
-            'brightnessdown': 'brightnessDown'
+            'back': 'back', 'home': 'home', 'recent': 'recent',
+            'up': 'up', 'down': 'down', 'left': 'left', 'right': 'right',
+            'center': 'confirm', 'menu': 'menu', 'search': 'search',
+            'previous': 'previous', 'playpause': 'playPause', 'next': 'next',
+            'volumedown': 'volumeDown', 'mute': 'mute', 'volumeup': 'volumeUp',
+            'power': 'power', 'brightnessup': 'brightnessUp', 'brightnessdown': 'brightnessDown'
         };
-
         document.querySelectorAll('[data-key]').forEach(btn => {
             const key = btn.dataset.key;
             if (keyButtons[key]) {
-                const span = btn.querySelector('span');
-                if (span) span.textContent = this.t(keyButtons[key]);
+                const icon = btn.querySelector('i');
+                const textNode = btn.childNodes[btn.childNodes.length - 1];
+                if (textNode && textNode.nodeType === 3) {
+                    textNode.textContent = this.t(keyButtons[key]);
+                } else if (!icon) {
+                    btn.textContent = this.t(keyButtons[key]);
+                }
             }
         });
 
-        // Placeholders
+        const extraBtns = document.querySelectorAll('.extra-nav .btn-small');
+        extraBtns.forEach(btn => {
+            const key = btn.dataset.key;
+            if (key === 'menu') {
+                btn.innerHTML = `<i class="fas fa-bars"></i> ${this.t('menu')}`;
+            } else if (key === 'search') {
+                btn.innerHTML = `<i class="fas fa-search"></i> ${this.t('search')}`;
+            }
+        });
+
+        const brightnessBtns = document.querySelectorAll('.power-controls .btn-small');
+        brightnessBtns.forEach(btn => {
+            const key = btn.dataset.key;
+            if (key === 'brightnessup') {
+                btn.innerHTML = `<i class="fas fa-sun"></i> ${this.t('brightnessUp')}`;
+            } else if (key === 'brightnessdown') {
+                btn.innerHTML = `<i class="fas fa-moon"></i> ${this.t('brightnessDown')}`;
+            }
+        });
+
         this.setPlaceholder('textInput', 'textPlaceholder');
+        this.setTextById('sendTextBtn', 'send');
         this.setPlaceholder('packageName', 'packagePlaceholder');
-        this.setPlaceholder('tapX', 'xCoord');
-        this.setPlaceholder('tapY', 'yCoord');
+        this.setTextById('startAppBtn', 'start');
+        this.setTextById('stopAppBtn', 'stop');
+        this.setTextById('listAppsBtn', 'getAppList');
+
+        const touchLabels = document.querySelectorAll('.touch-input label');
+        const touchKeys = ['xCoord', 'yCoord'];
+        touchLabels.forEach((el, i) => {
+            if (touchKeys[i]) el.textContent = this.t(touchKeys[i]);
+        });
+        this.setTextById('tapBtn', 'tap');
+
+        const swipeLabels = document.querySelectorAll('.swipe-input label');
+        const swipeKeys = ['startX', 'startY', 'endX', 'endY'];
+        swipeLabels.forEach((el, i) => {
+            if (swipeKeys[i]) el.textContent = this.t(swipeKeys[i]);
+        });
+        this.setTextById('swipeBtn', 'swipe');
+
+        const footerSpans = document.querySelectorAll('.footer-content span');
+        if (footerSpans[0]) footerSpans[0].textContent = this.t('footerTitle');
+        if (footerSpans[2]) footerSpans[2].textContent = this.t('footerDesc');
 
         const langBtn = document.getElementById('langToggle');
         if (langBtn) {
@@ -280,8 +368,13 @@ class I18n {
         }
     }
 
-    setText(selector, key, isClass = false) {
-        const el = isClass ? document.querySelector(selector) : document.getElementById(selector);
+    setTextById(id, key) {
+        const el = document.getElementById(id);
+        if (el) el.textContent = this.t(key);
+    }
+
+    setTextBySelector(selector, key) {
+        const el = document.querySelector(selector);
         if (el) el.textContent = this.t(key);
     }
 
@@ -291,5 +384,4 @@ class I18n {
     }
 }
 
-// Initialize i18n
 const i18nInstance = new I18n();

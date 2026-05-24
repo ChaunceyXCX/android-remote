@@ -273,7 +273,7 @@ class AndroidRemote {
     async connectDevice() {
         const ip = this.elements.deviceIP.value.trim();
         if (!ip) {
-            this.showToast('请输入设备IP地址', 'error');
+            this.showToast(i18nInstance.t('enterIP'), 'error');
             return;
         }
 
@@ -293,10 +293,10 @@ class AndroidRemote {
                     this.loadDeviceList();
                 }, 1000);
             } else {
-                this.showToast(data.error || '连接失败', 'error');
+                this.showToast(data.error || i18nInstance.t('connectionFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('连接请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('connectionRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
@@ -310,17 +310,17 @@ class AndroidRemote {
             if (data.success) {
                 this.showToast(data.message, 'success');
             } else {
-                this.showToast(data.error || '按键发送失败', 'error');
+                this.showToast(data.error || i18nInstance.t('keySendFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('按键请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('keyRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
     async sendText() {
         const text = this.elements.textInput.value.trim();
         if (!text) {
-            this.showToast('请输入要发送的文本', 'error');
+            this.showToast(i18nInstance.t('enterText'), 'error');
             return;
         }
 
@@ -336,17 +336,17 @@ class AndroidRemote {
                 this.showToast(data.message, 'success');
                 this.elements.textInput.value = '';
             } else {
-                this.showToast(data.error || '文本发送失败', 'error');
+                this.showToast(data.error || i18nInstance.t('textSendFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('文本请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('textRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
     async startApp() {
         const packageName = this.elements.packageName.value.trim();
         if (!packageName) {
-            this.showToast('请输入应用包名', 'error');
+            this.showToast(i18nInstance.t('enterPackage'), 'error');
             return;
         }
 
@@ -361,17 +361,17 @@ class AndroidRemote {
             if (data.success) {
                 this.showToast(data.message, 'success');
             } else {
-                this.showToast(data.error || '应用启动失败', 'error');
+                this.showToast(data.error || i18nInstance.t('appStartFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('启动请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('appStartRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
     async stopApp() {
         const packageName = this.elements.packageName.value.trim();
         if (!packageName) {
-            this.showToast('请输入应用包名', 'error');
+            this.showToast(i18nInstance.t('enterPackage'), 'error');
             return;
         }
 
@@ -386,10 +386,10 @@ class AndroidRemote {
             if (data.success) {
                 this.showToast(data.message, 'success');
             } else {
-                this.showToast(data.error || '应用停止失败', 'error');
+                this.showToast(data.error || i18nInstance.t('appStopFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('停止请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('appStopRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
@@ -401,10 +401,10 @@ class AndroidRemote {
             if (data.success && data.apps) {
                 this.renderAppList(data.apps);
             } else {
-                this.showToast(data.error || '获取应用列表失败', 'error');
+                this.showToast(data.error || i18nInstance.t('getAppListFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('列表请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('getAppListRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
@@ -412,7 +412,7 @@ class AndroidRemote {
         this.elements.appList.innerHTML = '';
         
         if (apps.length === 0) {
-            this.elements.appList.innerHTML = '<div class="app-item">未找到应用</div>';
+            this.elements.appList.innerHTML = `<div class="app-item">${i18nInstance.t('noAppFound')}</div>`;
             return;
         }
 
@@ -436,7 +436,7 @@ class AndroidRemote {
 
     async takeScreenshot() {
         this.elements.screenshotBtn.disabled = true;
-        this.elements.screenshotBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 截图中...';
+        this.elements.screenshotBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${i18nInstance.t('screenshoting')}`;
 
         try {
             const response = await fetch('/api/system/screenshot');
@@ -446,15 +446,15 @@ class AndroidRemote {
                 this.elements.screenshotImage.src = data.imageUrl + '?t=' + Date.now();
                 this.elements.screenshotImage.style.display = 'block';
                 this.elements.screenshotPlaceholder.style.display = 'none';
-                this.showToast('截图成功（点击图片可直接触摸）', 'success');
+                this.showToast(i18nInstance.t('screenshotSuccess'), 'success');
             } else {
-                this.showToast(data.error || '截图失败', 'error');
+                this.showToast(data.error || i18nInstance.t('screenshotFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('截图请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('screenshotRequestFailed') + ': ' + error.message, 'error');
         } finally {
             this.elements.screenshotBtn.disabled = false;
-            this.elements.screenshotBtn.innerHTML = '<i class="fas fa-camera"></i> 截图';
+            this.elements.screenshotBtn.innerHTML = `<i class="fas fa-camera"></i> ${i18nInstance.t('takeScreenshot')}`;
         }
     }
 
@@ -484,7 +484,7 @@ class AndroidRemote {
         } else {
             this.elements.tapX.value = deviceX;
             this.elements.tapY.value = deviceY;
-            this.showToast(`坐标已填入: (${deviceX}, ${deviceY})`, 'info');
+            this.showToast(`${i18nInstance.t('coordFilled')}: (${deviceX}, ${deviceY})`, 'info');
         }
     }
 
@@ -509,13 +509,13 @@ class AndroidRemote {
             const data = await response.json();
 
             if (data.success) {
-                this.showToast(`点击 (${x}, ${y})`, 'success');
+                this.showToast(`${i18nInstance.t('tapAt')} (${x}, ${y})`, 'success');
                 setTimeout(() => this.takeScreenshot(), 300);
             } else {
-                this.showToast(data.error || '点击失败', 'error');
+                this.showToast(data.error || i18nInstance.t('tapFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('点击请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('tapRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
@@ -524,7 +524,7 @@ class AndroidRemote {
         const y = parseInt(this.elements.tapY.value);
 
         if (isNaN(x) || isNaN(y)) {
-            this.showToast('请输入有效的坐标', 'error');
+            this.showToast(i18nInstance.t('enterValidCoords'), 'error');
             return;
         }
 
@@ -539,10 +539,10 @@ class AndroidRemote {
             if (data.success) {
                 this.showToast(data.message, 'success');
             } else {
-                this.showToast(data.error || '点击失败', 'error');
+                this.showToast(data.error || i18nInstance.t('tapFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('点击请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('tapRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
@@ -553,7 +553,7 @@ class AndroidRemote {
         const y2 = parseInt(this.elements.swipeY2.value);
 
         if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) {
-            this.showToast('请输入有效的坐标', 'error');
+            this.showToast(i18nInstance.t('enterValidCoords'), 'error');
             return;
         }
 
@@ -568,10 +568,10 @@ class AndroidRemote {
             if (data.success) {
                 this.showToast(data.message, 'success');
             } else {
-                this.showToast(data.error || '滑动失败', 'error');
+                this.showToast(data.error || i18nInstance.t('swipeFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('滑动请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('swipeRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
@@ -583,17 +583,17 @@ class AndroidRemote {
             if (data.success && data.devices) {
                 this.renderDeviceList(data.devices);
             } else {
-                this.elements.deviceListContent.innerHTML = '<div class="device-item-empty">暂无设备连接</div>';
+                this.elements.deviceListContent.innerHTML = `<div class="device-item-empty">${i18nInstance.t('noDevices')}</div>`;
             }
         } catch (error) {
             console.error('加载设备列表失败:', error);
-            this.elements.deviceListContent.innerHTML = '<div class="device-item-empty">加载失败</div>';
+            this.elements.deviceListContent.innerHTML = `<div class="device-item-empty">${i18nInstance.t('noDevices')}</div>`;
         }
     }
 
     renderDeviceList(devices) {
         if (devices.length === 0) {
-            this.elements.deviceListContent.innerHTML = '<div class="device-item-empty">暂无设备连接</div>';
+            this.elements.deviceListContent.innerHTML = `<div class="device-item-empty">${i18nInstance.t('noDevices')}</div>`;
             return;
         }
 
@@ -607,8 +607,8 @@ class AndroidRemote {
             const switchModeBtn = (canSwitchToWireless || canSwitchToUsb) ? 
                 `<button class="switch-mode-btn ${device.type === 'usb' ? 'to-wireless' : 'to-usb'}" 
                          data-device-id="${device.id}" data-mode="${device.type === 'usb' ? 'wireless' : 'usb'}"
-                         title="${device.type === 'usb' ? '切换到无线模式' : '切换到USB模式'}">
-                    ${device.type === 'usb' ? '→ 无线' : '→ USB'}
+                         title="${device.type === 'usb' ? i18nInstance.t('toWireless') : i18nInstance.t('toUSB')}">
+                    ${device.type === 'usb' ? i18nInstance.t('toWireless') : i18nInstance.t('toUSB')}
                 </button>` : '';
 
             const displayName = device.note || device.model || device.id;
@@ -623,9 +623,9 @@ class AndroidRemote {
                     </div>
                 </div>
                 <div class="device-item-right">
-                    <span class="device-type-badge ${device.type}">${device.type === 'usb' ? 'USB' : '无线'}</span>
+                    <span class="device-type-badge ${device.type}">${device.type === 'usb' ? 'USB' : i18nInstance.t('toWireless').replace('→ ', '')}</span>
                     ${switchModeBtn}
-                    <input type="text" class="device-note-input" placeholder="备注..." 
+                    <input type="text" class="device-note-input" placeholder="${i18nInstance.t('addNote')}" 
                            value="${device.note || ''}" data-device-id="${device.id}">
                 </div>
             `;
@@ -668,16 +668,16 @@ class AndroidRemote {
                 this.loadDeviceList();
                 setTimeout(() => this.checkStatus(), 500);
             } else {
-                this.showToast(data.error || '切换失败', 'error');
+                this.showToast(data.error || i18nInstance.t('switchFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('切换请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('switchRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
     async switchDeviceMode(deviceId, mode) {
-        const modeText = mode === 'wireless' ? '无线' : 'USB';
-        this.showToast(`正在切换到${modeText}模式...`, 'info');
+        const modeText = mode === 'wireless' ? i18nInstance.t('switchingToWireless') : i18nInstance.t('switchingToUSB');
+        this.showToast(modeText, 'info');
         
         try {
             const response = await fetch('/api/device/switch-mode', {
@@ -691,10 +691,10 @@ class AndroidRemote {
                 this.showToast(data.message, 'success');
                 setTimeout(() => this.loadDeviceList(), 1000);
             } else {
-                this.showToast(data.error || '切换失败', 'error');
+                this.showToast(data.error || i18nInstance.t('switchModeFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('切换请求失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('switchRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
@@ -708,12 +708,12 @@ class AndroidRemote {
             const data = await response.json();
 
             if (data.success) {
-                this.showToast('备注已保存', 'success');
+                this.showToast(i18nInstance.t('noteSaved'), 'success');
             } else {
-                this.showToast(data.error || '保存失败', 'error');
+                this.showToast(data.error || i18nInstance.t('noteSaveFailed'), 'error');
             }
         } catch (error) {
-            this.showToast('保存备注失败: ' + error.message, 'error');
+            this.showToast(i18nInstance.t('noteSaveRequestFailed') + ': ' + error.message, 'error');
         }
     }
 
