@@ -307,33 +307,17 @@ class I18n {
         document.querySelectorAll('[data-key]').forEach(btn => {
             const key = btn.dataset.key;
             if (keyButtons[key]) {
-                const icon = btn.querySelector('i');
-                const textNode = btn.childNodes[btn.childNodes.length - 1];
-                if (textNode && textNode.nodeType === 3) {
-                    textNode.textContent = this.t(keyButtons[key]);
-                } else if (!icon) {
-                    btn.textContent = this.t(keyButtons[key]);
+                const hasIcon = btn.querySelector('i');
+                const hasText = btn.textContent.trim().length > (hasIcon ? 1 : 0);
+                
+                if (hasIcon && hasText) {
+                    const icon = btn.querySelector('i');
+                    btn.innerHTML = '';
+                    btn.appendChild(icon);
+                    btn.appendChild(document.createTextNode(' ' + this.t(keyButtons[key])));
+                } else if (hasIcon && !hasText) {
+                    btn.title = this.t(keyButtons[key]);
                 }
-            }
-        });
-
-        const extraBtns = document.querySelectorAll('.extra-nav .btn-small');
-        extraBtns.forEach(btn => {
-            const key = btn.dataset.key;
-            if (key === 'menu') {
-                btn.innerHTML = `<i class="fas fa-bars"></i> ${this.t('menu')}`;
-            } else if (key === 'search') {
-                btn.innerHTML = `<i class="fas fa-search"></i> ${this.t('search')}`;
-            }
-        });
-
-        const brightnessBtns = document.querySelectorAll('.power-controls .btn-small');
-        brightnessBtns.forEach(btn => {
-            const key = btn.dataset.key;
-            if (key === 'brightnessup') {
-                btn.innerHTML = `<i class="fas fa-sun"></i> ${this.t('brightnessUp')}`;
-            } else if (key === 'brightnessdown') {
-                btn.innerHTML = `<i class="fas fa-moon"></i> ${this.t('brightnessDown')}`;
             }
         });
 
