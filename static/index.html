@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Android Remote</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
     <link rel="stylesheet" href="style.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -16,7 +17,31 @@
                 <h1>Android Remote</h1>
             </div>
             <div class="header-right">
-                <button id="langToggle" class="lang-toggle">EN</button>
+                <div class="lang-dropdown" id="langDropdown">
+                    <button class="lang-toggle" id="langToggle">
+                        <span class="lang-flag">🇨🇳</span>
+                        <span class="lang-name">中文</span>
+                        <i class="fas fa-chevron-down lang-arrow"></i>
+                    </button>
+                    <div class="lang-menu" id="langMenu">
+                        <div class="lang-option active" data-lang="zh">
+                            <span class="lang-flag">🇨🇳</span>
+                            <span class="lang-name">中文</span>
+                        </div>
+                        <div class="lang-option" data-lang="en">
+                            <span class="lang-flag">🇺🇸</span>
+                            <span class="lang-name">English</span>
+                        </div>
+                        <div class="lang-option" data-lang="ja">
+                            <span class="lang-flag">🇯🇵</span>
+                            <span class="lang-name">日本語</span>
+                        </div>
+                        <div class="lang-option" data-lang="ko">
+                            <span class="lang-flag">🇰🇷</span>
+                            <span class="lang-name">한국어</span>
+                        </div>
+                    </div>
+                </div>
                 <div class="status" id="deviceStatus">
                     <span class="status-dot"></span>
                     <span class="status-text">未连接</span>
@@ -64,24 +89,6 @@
                     </div>
                     <div class="device-list-content" id="deviceListContent">
                         <div class="device-item-empty">暂无设备连接</div>
-                    </div>
-                </div>
-                <div class="device-info" id="deviceInfo">
-                    <div class="info-item info-item-main">
-                        <span class="info-label">设备</span>
-                        <span class="info-value info-value-main" id="deviceDisplayName">-</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">型号</span>
-                        <span class="info-value" id="deviceModel">-</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Android</span>
-                        <span class="info-value" id="androidVersion">-</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">IP</span>
-                        <span class="info-value" id="deviceIPDisplay">-</span>
                     </div>
                 </div>
                 </div>

@@ -33,10 +33,9 @@ class AndroidRemote {
             connectionHeader: document.getElementById('connectionHeader'),
             connectionStatusText: document.getElementById('connectionStatusText'),
             connectionStatusDetail: document.getElementById('connectionStatusDetail'),
-            deviceDisplayName: document.getElementById('deviceDisplayName'),
-            deviceModel: document.getElementById('deviceModel'),
-            androidVersion: document.getElementById('androidVersion'),
-            deviceIPDisplay: document.getElementById('deviceIPDisplay'),
+            langDropdown: document.getElementById('langDropdown'),
+            langToggle: document.getElementById('langToggle'),
+            langMenu: document.getElementById('langMenu'),
             deviceList: document.getElementById('deviceList'),
             deviceListContent: document.getElementById('deviceListContent'),
             deviceListToggle: document.getElementById('deviceListToggle'),
@@ -138,13 +137,49 @@ class AndroidRemote {
     }
 
     initI18n() {
-        const langBtn = document.getElementById('langToggle');
-        if (langBtn) {
-            langBtn.addEventListener('click', () => {
-                const newLang = i18nInstance.toggleLanguage();
-                langBtn.textContent = newLang === 'zh' ? 'EN' : '中';
+        const dropdown = this.elements.langDropdown;
+        const toggle = this.elements.langToggle;
+        const menu = this.elements.langMenu;
+
+        if (dropdown && toggle && menu) {
+            toggle.addEventListener('click', (e) => {
+                e.stopPropagation();
+                dropdown.classList.toggle('open');
             });
+
+            menu.querySelectorAll('.lang-option').forEach(option => {
+                option.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const lang = option.dataset.lang;
+                    i18nInstance.setLanguage(lang);
+                    
+                    menu.querySelectorAll('.lang-option').forEach(o => o.classList.remove('active'));
+                    option.classList.add('active');
+                    
+                    const flag = option.querySelector('.lang-flag').textContent;
+                    const name = option.querySelector('.lang-name').textContent;
+                    toggle.querySelector('.lang-flag').textContent = flag;
+                    toggle.querySelector('.lang-name').textContent = name;
+                    
+                    dropdown.classList.remove('open');
+                });
+            });
+
+            document.addEventListener('click', () => {
+                dropdown.classList.remove('open');
+            });
+
+            const currentLang = i18nInstance.currentLang;
+            const currentOption = menu.querySelector(`[data-lang="${currentLang}"]`);
+            if (currentOption) {
+                currentOption.classList.add('active');
+                const flag = currentOption.querySelector('.lang-flag').textContent;
+                const name = currentOption.querySelector('.lang-name').textContent;
+                toggle.querySelector('.lang-flag').textContent = flag;
+                toggle.querySelector('.lang-name').textContent = name;
+            }
         }
+        
         i18nInstance.updatePageTexts();
     }
 
@@ -287,11 +322,6 @@ class AndroidRemote {
                     this.elements.connectionStatusDetail.textContent = detailText;
                 }
             }
-            const displayName = data.note || data.model || data.deviceId || '-';
-            this.elements.deviceDisplayName.textContent = displayName;
-            this.elements.deviceModel.textContent = data.model || '-';
-            this.elements.androidVersion.textContent = data.android || '-';
-            this.elements.deviceIPDisplay.textContent = data.ip || '-';
         } else {
             statusDot.classList.remove('connected');
             statusText.textContent = i18nInstance.t('disconnected');
@@ -302,10 +332,6 @@ class AndroidRemote {
                     this.elements.connectionStatusDetail.textContent = '';
                 }
             }
-            this.elements.deviceDisplayName.textContent = '-';
-            this.elements.deviceModel.textContent = '-';
-            this.elements.androidVersion.textContent = '-';
-            this.elements.deviceIPDisplay.textContent = '-';
         }
     }
 
@@ -663,18 +689,25 @@ class AndroidRemote {
             const showModel = device.note && device.model && device.model !== device.id;
 
             item.innerHTML = `
-                <div class="device-item-left">
-                    <div class="device-item-info">
-                        <div class="device-item-name">${displayName}</div>
-                        ${showModel ? `<div class="device-item-model">${device.model}</div>` : ''}
-                        <div class="device-item-id">${device.id}</div>
+                <div class="device-item-main">
+                    <div class="device-item-left">
+                        <span class="device-type-badge ${device.type}">${device.type === 'usb' ? 'USB' : '📶'}</span>
+                        <div class="device-item-info">
+                            <div class="device-item-name">${displayName}</div>
+                            ${showModel ? `<div class="device-item-model">${device.model}</div>` : ''}
+                        </div>
+                    </div>
+                    <div class="device-item-right">
+                        ${switchModeBtn}
+                        <input type="text" class="device-note-input" placeholder="${i18nInstance.t('addNote')}" 
+                               value="${device.note || ''}" data-device-id="${device.id}">
                     </div>
                 </div>
-                <div class="device-item-right">
-                    <span class="device-type-badge ${device.type}">${device.type === 'usb' ? 'USB' : i18nInstance.t('toWireless').replace('→ ', '')}</span>
-                    ${switchModeBtn}
-                    <input type="text" class="device-note-input" placeholder="${i18nInstance.t('addNote')}" 
-                           value="${device.note || ''}" data-device-id="${device.id}">
+                <div class="device-item-details">
+                    <span class="device-detail"><i class="fas fa-microchip"></i> ${device.model || '-'}</span>
+                    <span class="device-detail"><i class="fab fa-android"></i> ${device.android || '-'}</span>
+                    <span class="device-detail"><i class="fas fa-network-wired"></i> ${device.id}</span>
+                    ${device.ip ? `<span class="device-detail"><i class="fas fa-wifi"></i> ${device.ip}</span>` : ''}
                 </div>
             `;
             

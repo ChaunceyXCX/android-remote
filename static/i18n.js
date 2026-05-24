@@ -274,12 +274,6 @@ class I18n {
         this.setTextBySelector('.device-list-header h3', 'connectedDevices');
         this.setTextBySelector('.device-item-empty', 'noDevices');
 
-        const infoLabels = document.querySelectorAll('.info-label');
-        const labelKeys = ['device', 'model', 'androidVersion', 'ip'];
-        infoLabels.forEach((el, i) => {
-            if (labelKeys[i]) el.textContent = this.t(labelKeys[i]);
-        });
-
         this.setTextById('screenshotBtn', 'takeScreenshot');
         this.setTextBySelector('.toggle-label span', 'clickToTap');
         this.setTextBySelector('.screenshot-preview .placeholder span', 'screenshotPlaceholder');
