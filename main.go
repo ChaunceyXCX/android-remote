@@ -765,14 +765,23 @@ func handleDeviceSwitchMode(w http.ResponseWriter, r *http.Request) {
 
 		time.Sleep(2 * time.Second)
 
-		_, err = executeADB("connect", deviceIP+":5555")
+		newDeviceID := deviceIP + ":5555"
+		_, err = executeADB("connect", newDeviceID)
 		if err != nil {
 			sendJSON(w, http.StatusOK, APIResponse{Error: "无线连接失败: " + err.Error()})
 			return
 		}
 
-		log.Printf("设备 %s 已切换到无线模式: %s:5555", request.DeviceID, deviceIP)
-		sendJSON(w, http.StatusOK, APIResponse{Success: true, Message: "已切换到无线模式: " + deviceIP + ":5555"})
+		if note, exists := deviceNotes[request.DeviceID]; exists {
+			deviceNotes[newDeviceID] = note
+			saveDeviceNotes()
+		}
+
+		currentDevice = newDeviceID
+		saveDeviceConfig()
+
+		log.Printf("设备 %s 已切换到无线模式: %s", request.DeviceID, newDeviceID)
+		sendJSON(w, http.StatusOK, APIResponse{Success: true, Message: "已切换到无线模式: " + newDeviceID})
 
 	} else if request.Mode == "usb" && isWireless {
 		_, err := executeADB("-s", request.DeviceID, "usb")
@@ -781,7 +790,30 @@ func handleDeviceSwitchMode(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		log.Printf("设备 %s 已切换到USB模式", request.DeviceID)
+		time.Sleep(1 * time.Second)
+
+		output, _ := executeADB("devices")
+		var usbDeviceID string
+		for _, line := range strings.Split(output, "\n") {
+			if strings.Contains(line, "device") && !strings.Contains(line, ":") {
+				parts := strings.Fields(line)
+				if len(parts) >= 2 && parts[1] == "device" {
+					usbDeviceID = parts[0]
+					break
+				}
+			}
+		}
+
+		if usbDeviceID != "" {
+			if note, exists := deviceNotes[request.DeviceID]; exists {
+				deviceNotes[usbDeviceID] = note
+				saveDeviceNotes()
+			}
+			currentDevice = usbDeviceID
+			saveDeviceConfig()
+		}
+
+		log.Printf("设备 %s 已切换到USB模式, 新设备ID: %s", request.DeviceID, usbDeviceID)
 		sendJSON(w, http.StatusOK, APIResponse{Success: true, Message: "已切换到USB模式"})
 
 	} else {

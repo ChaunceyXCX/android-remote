@@ -641,14 +641,23 @@ class AndroidRemote {
         devices.forEach(device => {
             const item = document.createElement('div');
             item.className = `device-item ${device.selected ? 'selected' : ''}`;
-            const canSwitchToWireless = device.type === 'usb' && device.ip;
-            const canSwitchToUsb = device.type === 'wireless';
-            const switchModeBtn = (canSwitchToWireless || canSwitchToUsb) ? 
-                `<button class="switch-mode-btn ${device.type === 'usb' ? 'to-wireless' : 'to-usb'}" 
-                         data-device-id="${device.id}" data-mode="${device.type === 'usb' ? 'wireless' : 'usb'}"
-                         title="${device.type === 'usb' ? i18nInstance.t('toWireless') : i18nInstance.t('toUSB')}">
-                    ${device.type === 'usb' ? i18nInstance.t('toWireless') : i18nInstance.t('toUSB')}
-                </button>` : '';
+            
+            let switchModeBtn = '';
+            if (device.selected) {
+                if (device.type === 'usb' && device.ip) {
+                    switchModeBtn = `<button class="switch-mode-btn to-wireless" 
+                                             data-device-id="${device.id}" data-mode="wireless"
+                                             title="${i18nInstance.t('toWireless')}">
+                                        ${i18nInstance.t('toWireless')}
+                                     </button>`;
+                } else if (device.type === 'wireless') {
+                    switchModeBtn = `<button class="switch-mode-btn to-usb" 
+                                             data-device-id="${device.id}" data-mode="usb"
+                                             title="${i18nInstance.t('toUSB')}">
+                                        ${i18nInstance.t('toUSB')}
+                                     </button>`;
+                }
+            }
 
             const displayName = device.note || device.model || device.id;
             const showModel = device.note && device.model && device.model !== device.id;
@@ -703,7 +712,11 @@ class AndroidRemote {
             const data = await response.json();
 
             if (data.success) {
-                this.showToast(data.message, 'success');
+                const deviceItem = document.querySelector(`[data-device-id="${deviceId}"]`);
+                const deviceCard = deviceItem?.closest('.device-item');
+                const noteEl = deviceCard?.querySelector('.device-item-name');
+                const note = noteEl?.textContent || deviceId;
+                this.showToast(`${i18nInstance.t('switchedToDevice')}: ${note}`, 'success');
                 this.loadDeviceList();
                 setTimeout(() => this.checkStatus(), 500);
             } else {
