@@ -1071,37 +1071,6 @@ body {
     }
 }
 
-.touch-controls {
-    display: flex;
-    flex-direction: column;
-    gap: 16px;
-}
-
-.touch-inputs, .swipe-inputs {
-    display: flex;
-    gap: 12px;
-    align-items: end;
-    flex-wrap: wrap;
-}
-
-.touch-input, .swipe-input {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-    flex: 1;
-    min-width: 120px;
-}
-
-.touch-input label, .swipe-input label {
-    font-size: 0.8rem;
-    color: var(--text-secondary);
-}
-
-.touch-input .input-field, .swipe-input .input-field {
-    width: 100%;
-    min-width: 80px;
-}
-
 .footer {
     margin-top: 40px;
     padding: 20px 0;
@@ -1299,18 +1268,6 @@ body {
 
     .app-input-group .input-field {
         min-width: 100%;
-    }
-
-    .touch-inputs, .swipe-inputs {
-        flex-direction: column;
-    }
-
-    .touch-input, .swipe-input {
-        min-width: 100%;
-    }
-
-    .touch-input .input-field, .swipe-input .input-field {
-        width: 100%;
     }
 
     .nav-controls {

@@ -3,7 +3,7 @@ class AndroidRemote {
         this.pageType = this.detectPage();
         this.isConnected = false;
         this.currentPanel = 0;
-        this.totalPanels = 3;
+        this.totalPanels = 2;
         this.touchStartX = 0;
         this.touchStartY = 0;
         this.touchEndX = 0;
@@ -67,14 +67,6 @@ class AndroidRemote {
             clickIndicator: document.getElementById('clickIndicator'),
             clickToTap: document.getElementById('clickToTap'),
             syncActionRefresh: document.getElementById('syncActionRefresh'),
-            tapX: document.getElementById('tapX'),
-            tapY: document.getElementById('tapY'),
-            tapBtn: document.getElementById('tapBtn'),
-            swipeX1: document.getElementById('swipeX1'),
-            swipeY1: document.getElementById('swipeY1'),
-            swipeX2: document.getElementById('swipeX2'),
-            swipeY2: document.getElementById('swipeY2'),
-            swipeBtn: document.getElementById('swipeBtn'),
             swipePanels: document.getElementById('swipePanels'),
             swipeDots: document.getElementById('swipeDots'),
             playPauseBtn: document.querySelector('[data-key="playpause"]')
@@ -102,8 +94,6 @@ class AndroidRemote {
         this.elements.stopAppBtn.addEventListener('click', () => this.stopApp());
         this.elements.listAppsBtn.addEventListener('click', () => this.listApps());
         this.elements.screenshotBtn.addEventListener('click', () => this.takeScreenshot());
-        this.elements.tapBtn.addEventListener('click', () => this.simulateTap());
-        this.elements.swipeBtn.addEventListener('click', () => this.simulateSwipe());
         this.elements.screenshotPreview.addEventListener('click', (e) => this.handleScreenshotClick(e));
 
         const savedClickToTap = localStorage.getItem('clickToTap');
@@ -652,64 +642,6 @@ class AndroidRemote {
             }
         } catch (error) {
             this.showToast(i18nInstance.t('tapRequestFailed') + ': ' + error.message, 'error');
-        }
-    }
-
-    async simulateTap() {
-        const x = parseInt(this.elements.tapX.value);
-        const y = parseInt(this.elements.tapY.value);
-
-        if (isNaN(x) || isNaN(y)) {
-            this.showToast(i18nInstance.t('enterValidCoords'), 'error');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/system/tap', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ x, y })
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                this.showToast(data.message, 'success');
-                this.checkSyncRefresh();
-            } else {
-                this.showToast(data.error || i18nInstance.t('tapFailed'), 'error');
-            }
-        } catch (error) {
-            this.showToast(i18nInstance.t('tapRequestFailed') + ': ' + error.message, 'error');
-        }
-    }
-
-    async simulateSwipe() {
-        const x1 = parseInt(this.elements.swipeX1.value);
-        const y1 = parseInt(this.elements.swipeY1.value);
-        const x2 = parseInt(this.elements.swipeX2.value);
-        const y2 = parseInt(this.elements.swipeY2.value);
-
-        if (isNaN(x1) || isNaN(y1) || isNaN(x2) || isNaN(y2)) {
-            this.showToast(i18nInstance.t('enterValidCoords'), 'error');
-            return;
-        }
-
-        try {
-            const response = await fetch('/api/system/swipe', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ x1, y1, x2, y2 })
-            });
-            const data = await response.json();
-
-            if (data.success) {
-                this.showToast(data.message, 'success');
-                this.checkSyncRefresh();
-            } else {
-                this.showToast(data.error || i18nInstance.t('swipeFailed'), 'error');
-            }
-        } catch (error) {
-            this.showToast(i18nInstance.t('swipeRequestFailed') + ': ' + error.message, 'error');
         }
     }
 

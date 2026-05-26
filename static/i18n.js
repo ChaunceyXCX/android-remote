@@ -63,16 +63,6 @@ const i18n = {
         screenshotPreview: '截图预览',
         screenshotPlaceholder: '截图将显示在这里',
 
-        touchSimulator: '触摸模拟',
-        xCoord: 'X坐标',
-        yCoord: 'Y坐标',
-        startX: '起点X',
-        startY: '起点Y',
-        endX: '终点X',
-        endY: '终点Y',
-        tap: '点击',
-        swipe: '滑动',
-
         footerTitle: 'Android Remote Control',
         footerDesc: 'ADB命令转发',
 
@@ -95,12 +85,6 @@ const i18n = {
         screenshotFailed: '截图失败',
         screenshotRequestFailed: '截图请求失败',
         coordFilled: '坐标已填入',
-        tapAt: '点击',
-        tapFailed: '点击失败',
-        tapRequestFailed: '点击请求失败',
-        enterValidCoords: '请输入有效的坐标',
-        swipeFailed: '滑动失败',
-        swipeRequestFailed: '滑动请求失败',
         noteSaved: '备注已保存',
         noteSaveFailed: '保存失败',
         noteSaveRequestFailed: '保存备注失败',
@@ -188,16 +172,6 @@ const i18n = {
         screenshotPreview: 'Screenshot Preview',
         screenshotPlaceholder: 'Screenshot will appear here',
 
-        touchSimulator: 'Touch Simulator',
-        xCoord: 'X',
-        yCoord: 'Y',
-        startX: 'Start X',
-        startY: 'Start Y',
-        endX: 'End X',
-        endY: 'End Y',
-        tap: 'Tap',
-        swipe: 'Swipe',
-
         footerTitle: 'Android Remote Control',
         footerDesc: 'ADB Command Forwarding',
 
@@ -220,12 +194,6 @@ const i18n = {
         screenshotFailed: 'Screenshot failed',
         screenshotRequestFailed: 'Screenshot request failed',
         coordFilled: 'Coord filled',
-        tapAt: 'Tap at',
-        tapFailed: 'Tap failed',
-        tapRequestFailed: 'Tap request failed',
-        enterValidCoords: 'Please enter valid coordinates',
-        swipeFailed: 'Swipe failed',
-        swipeRequestFailed: 'Swipe request failed',
         noteSaved: 'Note saved',
         noteSaveFailed: 'Save failed',
         noteSaveRequestFailed: 'Note save failed',
@@ -336,20 +304,6 @@ class I18n {
         this.setTextById('startAppBtn', 'start');
         this.setTextById('stopAppBtn', 'stop');
         this.setTextById('listAppsBtn', 'getAppList');
-
-        const touchLabels = document.querySelectorAll('.touch-input label');
-        const touchKeys = ['xCoord', 'yCoord'];
-        touchLabels.forEach((el, i) => {
-            if (touchKeys[i]) el.textContent = this.t(touchKeys[i]);
-        });
-        this.setTextById('tapBtn', 'tap');
-
-        const swipeLabels = document.querySelectorAll('.swipe-input label');
-        const swipeKeys = ['startX', 'startY', 'endX', 'endY'];
-        swipeLabels.forEach((el, i) => {
-            if (swipeKeys[i]) el.textContent = this.t(swipeKeys[i]);
-        });
-        this.setTextById('swipeBtn', 'swipe');
 
         const footerSpans = document.querySelectorAll('.footer-content span');
         if (footerSpans[0]) footerSpans[0].textContent = this.t('footerTitle');
