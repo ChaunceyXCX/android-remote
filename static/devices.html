@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Android Remote - 设备管理</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤖</text></svg>">
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body data-page="devices">
+    <div class="container">
+        <header class="header">
+            <div class="logo">
+                <i class="fab fa-android"></i>
+                <h1>Android Remote</h1>
+            </div>
+            <div class="header-right">
+                <a href="index.html" class="back-to-home-link" id="backToHomeLink">
+                    <i class="fas fa-arrow-left"></i>
+                    <span>返回主页</span>
+                </a>
+                <div class="lang-selector">
+                    <select class="lang-select" id="langSelect">
+                        <option value="zh">🇨🇳 中文</option>
+                        <option value="en">🇺🇸 English</option>
+                    </select>
+                </div>
+                <div class="status" id="deviceStatus">
+                    <span class="status-dot"></span>
+                    <span class="status-text">未连接</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="main-content devices-page">
+            <h1 class="page-title" id="devicePageTitle">设备管理</h1>
+
+            <section class="connection-section" id="connectionSection">
+                <div class="section-header" id="connectionHeader">
+                    <div class="section-header-left">
+                        <i class="fas fa-mobile-alt"></i>
+                        <span>设备管理</span>
+                    </div>
+                    <div class="section-header-right">
+                        <div class="connection-status-info">
+                            <span class="connection-status-text" id="connectionStatusText">未连接</span>
+                            <span class="connection-status-detail" id="connectionStatusDetail"></span>
+                        </div>
+                        <i class="fas fa-chevron-down connection-toggle-icon"></i>
+                    </div>
+                </div>
+                <div class="connection-section-content" id="connectionContent">
+                    <div class="input-group">
+                        <input type="text" id="deviceIP" placeholder="设备IP地址或IP:端口 (例如: 192.168.1.100:5555)" class="input-field">
+                        <button id="connectBtn" class="btn btn-primary">
+                            <i class="fas fa-link"></i>
+                            连接
+                        </button>
+                        <button id="refreshDevicesBtn" class="btn btn-secondary">
+                            <i class="fas fa-sync-alt"></i>
+                            刷新设备
+                        </button>
+                    </div>
+                    <div class="connection-tip">
+                        <i class="fas fa-info-circle"></i>
+                        <span>无线ADB连接前，请确保在安卓设备的开发者选项中开启"无线调试"，并勾选"永久允许"该电脑进行调试</span>
+                    </div>
+                    <div class="device-list" id="deviceList">
+                        <div class="device-list-header">
+                            <h3>已连接设备</h3>
+                            <button class="device-list-toggle" id="deviceListToggle" aria-label="折叠/展开设备列表">
+                                <i class="fas fa-chevron-up"></i>
+                            </button>
+                        </div>
+                        <div class="device-list-content" id="deviceListContent">
+                            <div class="device-item-empty">暂无设备连接</div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="footer">
+            <div class="footer-content">
+                <span>Android Remote Control</span>
+                <span class="separator">|</span>
+                <span>ADB命令转发</span>
+            </div>
+        </footer>
+    </div>
+
+    <div class="toast" id="toast"></div>
+    <script src="i18n.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>

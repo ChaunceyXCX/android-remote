@@ -1,44 +1,58 @@
 class AndroidRemote {
     constructor() {
+        this.pageType = this.detectPage();
         this.isConnected = false;
-        this.deviceIP = '';
         this.currentPanel = 0;
         this.totalPanels = 3;
         this.touchStartX = 0;
         this.touchStartY = 0;
         this.touchEndX = 0;
         this.isSwiping = false;
+        this.elements = {};
         this.init();
     }
 
+    detectPage() {
+        const path = window.location.pathname;
+        if (path.includes('devices')) return 'devices';
+        return 'index';
+    }
+
     init() {
-        this.bindElements();
-        this.bindEvents();
+        this.elements.deviceStatus = document.getElementById('deviceStatus');
+        this.elements.langSelect = document.getElementById('langSelect');
+        this.elements.toast = document.getElementById('toast');
+
+        this.initI18n();
+
+        if (this.pageType === 'index') {
+            this.initIndexPage();
+        } else {
+            this.initDevicesPage();
+        }
+    }
+
+    initIndexPage() {
+        this.bindIndexElements();
+        this.bindIndexEvents();
+        this.checkStatus();
+        this.loadDeviceDropdown();
+        this.initSwipe();
+        this.initMediaStatusPolling();
+    }
+
+    initDevicesPage() {
+        this.bindDeviceElements();
+        this.bindDeviceEvents();
         this.checkStatus();
         this.loadDeviceList();
         this.initDeviceListToggle();
         this.initConnectionToggle();
-        this.initSwipe();
-        this.initI18n();
-        this.initMediaStatusPolling();
     }
 
-    bindElements() {
-        this.elements = {
-            deviceIP: document.getElementById('deviceIP'),
-            connectBtn: document.getElementById('connectBtn'),
-            refreshDevicesBtn: document.getElementById('refreshDevicesBtn'),
-            deviceStatus: document.getElementById('deviceStatus'),
-            connectionSection: document.getElementById('connectionSection'),
-            connectionHeader: document.getElementById('connectionHeader'),
-            connectionStatusText: document.getElementById('connectionStatusText'),
-            connectionStatusDetail: document.getElementById('connectionStatusDetail'),
-            langDropdown: document.getElementById('langDropdown'),
-            langToggle: document.getElementById('langToggle'),
-            langMenu: document.getElementById('langMenu'),
-            deviceList: document.getElementById('deviceList'),
-            deviceListContent: document.getElementById('deviceListContent'),
-            deviceListToggle: document.getElementById('deviceListToggle'),
+    bindIndexElements() {
+        Object.assign(this.elements, {
+            deviceDropdown: document.getElementById('deviceDropdown'),
             textInput: document.getElementById('textInput'),
             sendTextBtn: document.getElementById('sendTextBtn'),
             packageName: document.getElementById('packageName'),
@@ -52,6 +66,7 @@ class AndroidRemote {
             screenshotPreview: document.getElementById('screenshotPreview'),
             clickIndicator: document.getElementById('clickIndicator'),
             clickToTap: document.getElementById('clickToTap'),
+            syncActionRefresh: document.getElementById('syncActionRefresh'),
             tapX: document.getElementById('tapX'),
             tapY: document.getElementById('tapY'),
             tapBtn: document.getElementById('tapBtn'),
@@ -60,16 +75,28 @@ class AndroidRemote {
             swipeX2: document.getElementById('swipeX2'),
             swipeY2: document.getElementById('swipeY2'),
             swipeBtn: document.getElementById('swipeBtn'),
-            toast: document.getElementById('toast'),
             swipePanels: document.getElementById('swipePanels'),
             swipeDots: document.getElementById('swipeDots'),
             playPauseBtn: document.querySelector('[data-key="playpause"]')
-        };
+        });
     }
 
-    bindEvents() {
-        this.elements.connectBtn.addEventListener('click', () => this.connectDevice());
-        this.elements.refreshDevicesBtn.addEventListener('click', () => this.loadDeviceList());
+    bindDeviceElements() {
+        Object.assign(this.elements, {
+            deviceIP: document.getElementById('deviceIP'),
+            connectBtn: document.getElementById('connectBtn'),
+            refreshDevicesBtn: document.getElementById('refreshDevicesBtn'),
+            connectionSection: document.getElementById('connectionSection'),
+            connectionHeader: document.getElementById('connectionHeader'),
+            connectionStatusText: document.getElementById('connectionStatusText'),
+            connectionStatusDetail: document.getElementById('connectionStatusDetail'),
+            deviceList: document.getElementById('deviceList'),
+            deviceListContent: document.getElementById('deviceListContent'),
+            deviceListToggle: document.getElementById('deviceListToggle')
+        });
+    }
+
+    bindIndexEvents() {
         this.elements.sendTextBtn.addEventListener('click', () => this.sendText());
         this.elements.startAppBtn.addEventListener('click', () => this.startApp());
         this.elements.stopAppBtn.addEventListener('click', () => this.stopApp());
@@ -79,12 +106,33 @@ class AndroidRemote {
         this.elements.swipeBtn.addEventListener('click', () => this.simulateSwipe());
         this.elements.screenshotPreview.addEventListener('click', (e) => this.handleScreenshotClick(e));
 
+        const savedClickToTap = localStorage.getItem('clickToTap');
+        if (savedClickToTap !== null) {
+            this.elements.clickToTap.checked = savedClickToTap === 'true';
+        }
+        this.elements.clickToTap.addEventListener('change', () => {
+            localStorage.setItem('clickToTap', this.elements.clickToTap.checked);
+        });
+
+        const savedSyncActionRefresh = localStorage.getItem('syncActionRefresh');
+        if (savedSyncActionRefresh !== null) {
+            this.elements.syncActionRefresh.checked = savedSyncActionRefresh === 'true';
+        } else {
+            this.elements.syncActionRefresh.checked = true;
+        }
+        this.elements.syncActionRefresh.addEventListener('change', () => {
+            localStorage.setItem('syncActionRefresh', this.elements.syncActionRefresh.checked);
+        });
+
         this.elements.textInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') this.sendText();
         });
 
-        this.elements.deviceIP.addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') this.connectDevice();
+        this.elements.deviceDropdown.addEventListener('change', (e) => {
+            const deviceId = e.target.value;
+            if (deviceId) {
+                this.switchDevice(deviceId);
+            }
         });
 
         document.querySelectorAll('[data-key]').forEach(btn => {
@@ -95,9 +143,19 @@ class AndroidRemote {
         });
     }
 
+    bindDeviceEvents() {
+        this.elements.connectBtn.addEventListener('click', () => this.connectDevice());
+        this.elements.refreshDevicesBtn.addEventListener('click', () => this.loadDeviceList());
+        this.elements.deviceIP.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') this.connectDevice();
+        });
+    }
+
     initDeviceListToggle() {
         const toggle = this.elements.deviceListToggle;
         const deviceList = this.elements.deviceList;
+        if (!toggle || !deviceList) return;
+
         const header = deviceList.querySelector('.device-list-header');
 
         const savedState = localStorage.getItem('deviceListCollapsed');
@@ -116,7 +174,9 @@ class AndroidRemote {
             toggleHandler();
         });
 
-        header.addEventListener('click', toggleHandler);
+        if (header) {
+            header.addEventListener('click', toggleHandler);
+        }
     }
 
     initConnectionToggle() {
@@ -137,53 +197,25 @@ class AndroidRemote {
     }
 
     initI18n() {
-        const dropdown = this.elements.langDropdown;
-        const toggle = this.elements.langToggle;
-        const menu = this.elements.langMenu;
+        const select = this.elements.langSelect;
 
-        if (dropdown && toggle && menu) {
-            toggle.addEventListener('click', (e) => {
-                e.stopPropagation();
-                dropdown.classList.toggle('open');
-            });
-
-            menu.querySelectorAll('.lang-option').forEach(option => {
-                option.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    const lang = option.dataset.lang;
-                    i18nInstance.setLanguage(lang);
-                    
-                    menu.querySelectorAll('.lang-option').forEach(o => o.classList.remove('active'));
-                    option.classList.add('active');
-                    
-                    const flag = option.querySelector('.lang-flag').textContent;
-                    const name = option.querySelector('.lang-name').textContent;
-                    toggle.querySelector('.lang-flag').textContent = flag;
-                    toggle.querySelector('.lang-name').textContent = name;
-                    
-                    dropdown.classList.remove('open');
-                });
-            });
-
-            document.addEventListener('click', () => {
-                dropdown.classList.remove('open');
+        if (select) {
+            select.addEventListener('change', (e) => {
+                const lang = e.target.value;
+                i18nInstance.setLanguage(lang);
             });
 
             const currentLang = i18nInstance.currentLang;
-            const currentOption = menu.querySelector(`[data-lang="${currentLang}"]`);
-            if (currentOption) {
-                currentOption.classList.add('active');
-                const flag = currentOption.querySelector('.lang-flag').textContent;
-                const name = currentOption.querySelector('.lang-name').textContent;
-                toggle.querySelector('.lang-flag').textContent = flag;
-                toggle.querySelector('.lang-name').textContent = name;
+            if (currentLang) {
+                select.value = currentLang;
             }
         }
-        
+
         i18nInstance.updatePageTexts();
     }
 
     initMediaStatusPolling() {
+        if (this.pageType !== 'index') return;
         this.checkMediaStatus();
         setInterval(() => this.checkMediaStatus(), 3000);
     }
@@ -200,7 +232,7 @@ class AndroidRemote {
     updatePlayPauseIcon(isPlaying) {
         const btn = this.elements.playPauseBtn;
         if (!btn) return;
-        
+
         const icon = btn.querySelector('i');
         if (!icon) return;
 
@@ -335,6 +367,35 @@ class AndroidRemote {
         }
     }
 
+    async loadDeviceDropdown() {
+        try {
+            const response = await fetch('/api/devices');
+            const data = await response.json();
+
+            const dropdown = this.elements.deviceDropdown;
+            if (!dropdown) return;
+
+            const currentValue = dropdown.value;
+            dropdown.innerHTML = `<option value="">${i18nInstance.t('selectDevice')}</option>`;
+
+            if (data.success && data.devices && data.devices.length > 0) {
+                data.devices.forEach(device => {
+                    const option = document.createElement('option');
+                    option.value = device.id;
+                    const displayName = device.note || device.model || device.id;
+                    const selectedMark = device.selected ? ' ✓' : '';
+                    option.textContent = `${displayName} (${device.type === 'usb' ? 'USB' : 'WiFi'})${selectedMark}`;
+                    if (device.selected) {
+                        option.selected = true;
+                    }
+                    dropdown.appendChild(option);
+                });
+            }
+        } catch (error) {
+            console.error('加载设备列表失败:', error);
+        }
+    }
+
     async connectDevice() {
         const ip = this.elements.deviceIP.value.trim();
         if (!ip) {
@@ -374,6 +435,7 @@ class AndroidRemote {
 
             if (data.success) {
                 this.showToast(data.message, 'success');
+                this.checkSyncRefresh();
             } else {
                 this.showToast(data.error || i18nInstance.t('keySendFailed'), 'error');
             }
@@ -400,6 +462,7 @@ class AndroidRemote {
             if (data.success) {
                 this.showToast(data.message, 'success');
                 this.elements.textInput.value = '';
+                this.checkSyncRefresh();
             } else {
                 this.showToast(data.error || i18nInstance.t('textSendFailed'), 'error');
             }
@@ -425,6 +488,7 @@ class AndroidRemote {
 
             if (data.success) {
                 this.showToast(data.message, 'success');
+                this.checkSyncRefresh();
             } else {
                 this.showToast(data.error || i18nInstance.t('appStartFailed'), 'error');
             }
@@ -450,6 +514,7 @@ class AndroidRemote {
 
             if (data.success) {
                 this.showToast(data.message, 'success');
+                this.checkSyncRefresh();
             } else {
                 this.showToast(data.error || i18nInstance.t('appStopFailed'), 'error');
             }
@@ -475,7 +540,7 @@ class AndroidRemote {
 
     renderAppList(apps) {
         this.elements.appList.innerHTML = '';
-        
+
         if (apps.length === 0) {
             this.elements.appList.innerHTML = `<div class="app-item">${i18nInstance.t('noAppFound')}</div>`;
             return;
@@ -497,6 +562,12 @@ class AndroidRemote {
             });
             this.elements.appList.appendChild(item);
         });
+    }
+
+    checkSyncRefresh() {
+        if (this.elements.syncActionRefresh && this.elements.syncActionRefresh.checked) {
+            setTimeout(() => this.takeScreenshot(), 500);
+        }
     }
 
     async takeScreenshot() {
@@ -530,15 +601,15 @@ class AndroidRemote {
 
         const img = this.elements.screenshotImage;
         const rect = img.getBoundingClientRect();
-        
+
         const imgNaturalWidth = img.naturalWidth;
         const imgNaturalHeight = img.naturalHeight;
         const displayWidth = rect.width;
         const displayHeight = rect.height;
-        
+
         const clickX = e.clientX - rect.left;
         const clickY = e.clientY - rect.top;
-        
+
         const deviceX = Math.round(clickX * (imgNaturalWidth / displayWidth));
         const deviceY = Math.round(clickY * (imgNaturalHeight / displayHeight));
 
@@ -558,7 +629,7 @@ class AndroidRemote {
         indicator.style.left = x + 'px';
         indicator.style.top = y + 'px';
         indicator.classList.add('active');
-        
+
         setTimeout(() => {
             indicator.classList.remove('active');
         }, 500);
@@ -575,7 +646,7 @@ class AndroidRemote {
 
             if (data.success) {
                 this.showToast(`${i18nInstance.t('tapAt')} (${x}, ${y})`, 'success');
-                setTimeout(() => this.takeScreenshot(), 300);
+                this.checkSyncRefresh();
             } else {
                 this.showToast(data.error || i18nInstance.t('tapFailed'), 'error');
             }
@@ -603,6 +674,7 @@ class AndroidRemote {
 
             if (data.success) {
                 this.showToast(data.message, 'success');
+                this.checkSyncRefresh();
             } else {
                 this.showToast(data.error || i18nInstance.t('tapFailed'), 'error');
             }
@@ -632,6 +704,7 @@ class AndroidRemote {
 
             if (data.success) {
                 this.showToast(data.message, 'success');
+                this.checkSyncRefresh();
             } else {
                 this.showToast(data.error || i18nInstance.t('swipeFailed'), 'error');
             }
@@ -648,11 +721,15 @@ class AndroidRemote {
             if (data.success && data.devices) {
                 this.renderDeviceList(data.devices);
             } else {
-                this.elements.deviceListContent.innerHTML = `<div class="device-item-empty">${i18nInstance.t('noDevices')}</div>`;
+                if (this.elements.deviceListContent) {
+                    this.elements.deviceListContent.innerHTML = `<div class="device-item-empty">${i18nInstance.t('noDevices')}</div>`;
+                }
             }
         } catch (error) {
             console.error('加载设备列表失败:', error);
-            this.elements.deviceListContent.innerHTML = `<div class="device-item-empty">${i18nInstance.t('noDevices')}</div>`;
+            if (this.elements.deviceListContent) {
+                this.elements.deviceListContent.innerHTML = `<div class="device-item-empty">${i18nInstance.t('noDevices')}</div>`;
+            }
         }
     }
 
@@ -663,21 +740,21 @@ class AndroidRemote {
         }
 
         this.elements.deviceListContent.innerHTML = '';
-        
+
         devices.forEach(device => {
             const item = document.createElement('div');
             item.className = `device-item ${device.selected ? 'selected' : ''}`;
-            
+
             let switchModeBtn = '';
             if (device.selected) {
                 if (device.type === 'usb' && device.ip) {
-                    switchModeBtn = `<button class="switch-mode-btn to-wireless" 
+                    switchModeBtn = `<button class="switch-mode-btn to-wireless"
                                              data-device-id="${device.id}" data-mode="wireless"
                                              title="${i18nInstance.t('toWireless')}">
                                         ${i18nInstance.t('toWireless')}
                                      </button>`;
                 } else if (device.type === 'wireless') {
-                    switchModeBtn = `<button class="switch-mode-btn to-usb" 
+                    switchModeBtn = `<button class="switch-mode-btn to-usb"
                                              data-device-id="${device.id}" data-mode="usb"
                                              title="${i18nInstance.t('toUSB')}">
                                         ${i18nInstance.t('toUSB')}
@@ -699,7 +776,7 @@ class AndroidRemote {
                     </div>
                     <div class="device-item-right">
                         ${switchModeBtn}
-                        <input type="text" class="device-note-input" placeholder="${i18nInstance.t('addNote')}" 
+                        <input type="text" class="device-note-input" placeholder="${i18nInstance.t('addNote')}"
                                value="${device.note || ''}" data-device-id="${device.id}">
                     </div>
                 </div>
@@ -710,7 +787,7 @@ class AndroidRemote {
                     ${device.ip ? `<span class="device-detail"><i class="fas fa-wifi"></i> ${device.ip}</span>` : ''}
                 </div>
             `;
-            
+
             const noteInput = item.querySelector('.device-note-input');
             noteInput.addEventListener('click', (e) => e.stopPropagation());
             noteInput.addEventListener('keypress', (e) => {
@@ -729,7 +806,7 @@ class AndroidRemote {
                     this.switchDeviceMode(switchModeBtnEl.dataset.deviceId, switchModeBtnEl.dataset.mode);
                 });
             }
-            
+
             item.addEventListener('click', () => this.switchDevice(device.id));
             this.elements.deviceListContent.appendChild(item);
         });
@@ -745,12 +822,13 @@ class AndroidRemote {
             const data = await response.json();
 
             if (data.success) {
-                const deviceItem = document.querySelector(`[data-device-id="${deviceId}"]`);
-                const deviceCard = deviceItem?.closest('.device-item');
-                const noteEl = deviceCard?.querySelector('.device-item-name');
-                const note = noteEl?.textContent || deviceId;
+                const note = this.elements.deviceDropdown?.selectedOptions?.[0]?.textContent || deviceId;
                 this.showToast(`${i18nInstance.t('switchedToDevice')}: ${note}`, 'success');
-                this.loadDeviceList();
+                if (this.pageType === 'devices') {
+                    this.loadDeviceList();
+                } else {
+                    this.loadDeviceDropdown();
+                }
                 setTimeout(() => this.checkStatus(), 500);
             } else {
                 this.showToast(data.error || i18nInstance.t('switchFailed'), 'error');
@@ -763,7 +841,7 @@ class AndroidRemote {
     async switchDeviceMode(deviceId, mode) {
         const modeText = mode === 'wireless' ? i18nInstance.t('switchingToWireless') : i18nInstance.t('switchingToUSB');
         this.showToast(modeText, 'info');
-        
+
         try {
             const response = await fetch('/api/device/switch-mode', {
                 method: 'POST',
@@ -806,7 +884,7 @@ class AndroidRemote {
         const toast = this.elements.toast;
         toast.textContent = message;
         toast.className = 'toast show ' + type;
-        
+
         setTimeout(() => {
             toast.className = 'toast';
         }, 3000);

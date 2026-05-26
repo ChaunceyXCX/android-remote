@@ -59,6 +59,7 @@ const i18n = {
         takeScreenshot: '截图',
         screenshoting: '截图中...',
         clickToTap: '点击截图直接触摸',
+        syncActionRefresh: '同步操作刷新截图',
         screenshotPreview: '截图预览',
         screenshotPlaceholder: '截图将显示在这里',
 
@@ -111,6 +112,12 @@ const i18n = {
         switchedToWireless: '已切换到无线模式',
         switchedToUSB: '已切换到USB模式',
         switchModeFailed: '切换失败',
+
+        manageDevices: '管理设备',
+        backToHome: '返回主页',
+        selectDevice: '选择设备',
+        deviceManagementPage: '设备管理',
+        noDeviceSelected: '未选择设备',
 
         navMedia: '导航/媒体',
         inputApps: '输入/应用',
@@ -177,6 +184,7 @@ const i18n = {
         takeScreenshot: 'Screenshot',
         screenshoting: 'Taking...',
         clickToTap: 'Click to tap',
+        syncActionRefresh: 'Sync actions to refresh screenshot',
         screenshotPreview: 'Screenshot Preview',
         screenshotPlaceholder: 'Screenshot will appear here',
 
@@ -230,6 +238,12 @@ const i18n = {
         switchedToUSB: 'Switched to USB',
         switchModeFailed: 'Switch failed',
 
+        manageDevices: 'Manage Devices',
+        backToHome: 'Back to Home',
+        selectDevice: 'Select Device',
+        deviceManagementPage: 'Device Management',
+        noDeviceSelected: 'No device selected',
+
         navMedia: 'Nav/Media',
         inputApps: 'Input/Apps',
         touchControl: 'Touch'
@@ -275,7 +289,8 @@ class I18n {
         this.setTextBySelector('.device-item-empty', 'noDevices');
 
         this.setTextById('screenshotBtn', 'takeScreenshot');
-        this.setTextBySelector('.toggle-label span', 'clickToTap');
+        this.setTextById('clickToTapLabel', 'clickToTap');
+        this.setTextById('syncActionRefreshLabel', 'syncActionRefresh');
         this.setTextBySelector('.screenshot-preview .placeholder span', 'screenshotPlaceholder');
 
         const sections = {
@@ -340,10 +355,21 @@ class I18n {
         if (footerSpans[0]) footerSpans[0].textContent = this.t('footerTitle');
         if (footerSpans[2]) footerSpans[2].textContent = this.t('footerDesc');
 
-        const langBtn = document.getElementById('langToggle');
-        if (langBtn) {
-            langBtn.textContent = this.currentLang === 'zh' ? 'EN' : '中';
+        const langSelect = document.getElementById('langSelect');
+        if (langSelect) {
+            langSelect.value = this.currentLang;
         }
+
+        const deviceDropdown = document.getElementById('deviceDropdown');
+        if (deviceDropdown) {
+            const firstOption = deviceDropdown.querySelector('option[value=""]');
+            if (firstOption) firstOption.textContent = this.t('selectDevice');
+        }
+
+        this.setTextById('manageDevicesLink', 'manageDevices');
+        this.setTextById('backToHomeLink', 'backToHome');
+
+        this.setTextById('devicePageTitle', 'deviceManagementPage');
     }
 
     setTextById(id, key) {
