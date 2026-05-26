@@ -1200,6 +1200,23 @@ body {
     border: 1px solid var(--border);
 }
 
+.app-list::-webkit-scrollbar {
+    width: 6px;
+}
+
+.app-list::-webkit-scrollbar-track {
+    background: var(--background);
+}
+
+.app-list::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 3px;
+}
+
+.app-list::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
 .app-item {
     display: flex;
     align-items: center;
@@ -1646,13 +1663,14 @@ body {
         flex: 1;
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
+        justify-content: flex-start;
+        gap: 16px;
     }
 
     .apps .app-list {
-        flex: 1;
-        max-height: none;
+        height: 380px;
         min-height: 280px;
+        overflow-y: auto;
     }
 
     .touch {
