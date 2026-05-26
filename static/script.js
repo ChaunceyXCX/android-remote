@@ -47,7 +47,6 @@ class AndroidRemote {
         this.checkStatus();
         this.loadDeviceList();
         this.initDeviceListToggle();
-        this.initConnectionToggle();
     }
 
     bindIndexElements() {
@@ -78,8 +77,6 @@ class AndroidRemote {
             deviceIP: document.getElementById('deviceIP'),
             connectBtn: document.getElementById('connectBtn'),
             refreshDevicesBtn: document.getElementById('refreshDevicesBtn'),
-            connectionSection: document.getElementById('connectionSection'),
-            connectionHeader: document.getElementById('connectionHeader'),
             connectionStatusText: document.getElementById('connectionStatusText'),
             connectionStatusDetail: document.getElementById('connectionStatusDetail'),
             deviceList: document.getElementById('deviceList'),
@@ -167,23 +164,6 @@ class AndroidRemote {
         if (header) {
             header.addEventListener('click', toggleHandler);
         }
-    }
-
-    initConnectionToggle() {
-        const section = this.elements.connectionSection;
-        const header = this.elements.connectionHeader;
-        if (!section || !header) return;
-
-        const savedState = localStorage.getItem('connectionCollapsed');
-        if (savedState === 'true') {
-            section.classList.add('collapsed');
-        }
-
-        header.addEventListener('click', () => {
-            section.classList.toggle('collapsed');
-            const isCollapsed = section.classList.contains('collapsed');
-            localStorage.setItem('connectionCollapsed', isCollapsed);
-        });
     }
 
     initI18n() {
