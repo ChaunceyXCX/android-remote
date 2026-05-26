@@ -1,0 +1,71 @@
+name: Release Build
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build & Release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, windows, darwin]
+        goarch: [amd64, arm64]
+        exclude:
+          - goos: windows
+            goarch: arm64
+        include:
+          - goos: windows
+            ext: .exe
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+          cache: true
+
+      - name: Build and Package
+        run: |
+          mkdir -p dist
+          GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} go build -ldflags="-s -w" -o dist/android-remote${{ matrix.ext }} main.go
+          cp -r static dist/
+          
+          # Compress based on platform
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            cd dist
+            zip -r ../android-remote-${{ matrix.goos }}-${{ matrix.goarch }}.zip .
+          else
+            cd dist
+            tar -czvf ../android-remote-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz .
+          fi
+
+      - name: Upload Artifacts to Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Use gh release create/upload to attach built packages
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          
+          # Check if release exists; if not, create it
+          if ! gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release create "$TAG_NAME" \
+              --title "Release $TAG_NAME" \
+              --note "Automated release build for $TAG_NAME" \
+              --draft=false \
+              --prerelease=false
+          fi
+          
+          # Upload files
+          if [ "${{ matrix.goos }}" = "windows" ]; then
+            gh release upload "$TAG_NAME" android-remote-${{ matrix.goos }}-${{ matrix.goarch }}.zip --clobber
+          else
+            gh release upload "$TAG_NAME" android-remote-${{ matrix.goos }}-${{ matrix.goarch }}.tar.gz --clobber
+          fi

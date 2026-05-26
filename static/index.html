@@ -45,22 +45,22 @@
                     <div class="screenshot-header">
                         <button id="screenshotBtn" class="btn btn-primary">
                             <i class="fas fa-camera"></i>
-                            截图
+                            获取屏幕
                         </button>
                         <label class="toggle-label">
                             <input type="checkbox" id="clickToTap" checked>
-                            <span id="clickToTapLabel">点击截图直接触摸</span>
+                            <span id="clickToTapLabel">点击屏幕直接触摸</span>
                         </label>
                         <label class="toggle-label">
                             <input type="checkbox" id="syncActionRefresh" checked>
-                            <span id="syncActionRefreshLabel">同步操作刷新截图</span>
+                            <span id="syncActionRefreshLabel">同步操作刷新屏幕</span>
                         </label>
                     </div>
                     <div class="screenshot-preview" id="screenshotPreview">
-                        <img id="screenshotImage" src="" alt="截图预览" style="display: none;">
+                        <img id="screenshotImage" src="" alt="屏幕预览" style="display: none;">
                         <div class="placeholder" id="screenshotPlaceholder">
                             <i class="fas fa-image"></i>
-                            <span>截图将显示在这里</span>
+                            <span>屏幕画面将显示在这里</span>
                         </div>
                         <div class="click-indicator" id="clickIndicator"></div>
                     </div>
@@ -129,60 +129,64 @@
                     </div>
 
                     <div class="swipe-panel" data-panel="1">
-                        <section class="control-section media">
-                            <h2 class="section-title">媒体控制</h2>
-                            <div class="media-section-group">
-                                <div class="media-controls">
-                                    <button class="btn btn-icon" data-key="previous" title="上一曲">
-                                        <i class="fas fa-step-backward"></i>
-                                    </button>
-                                    <button class="btn btn-icon btn-play" data-key="playpause" title="播放/暂停">
-                                        <i class="fas fa-play"></i>
-                                    </button>
-                                    <button class="btn btn-icon" data-key="next" title="下一曲">
-                                        <i class="fas fa-step-forward"></i>
-                                    </button>
+                        <div class="media-input-wrapper">
+                            <section class="control-section media">
+                                <h2 class="section-title">媒体控制</h2>
+                                <div class="media-section-group">
+                                    <div class="media-controls">
+                                        <button class="btn btn-icon" data-key="previous" title="上一曲">
+                                            <i class="fas fa-step-backward"></i>
+                                        </button>
+                                        <button class="btn btn-icon btn-play" data-key="playpause" title="播放/暂停">
+                                            <i class="fas fa-play"></i>
+                                        </button>
+                                        <button class="btn btn-icon" data-key="next" title="下一曲">
+                                            <i class="fas fa-step-forward"></i>
+                                        </button>
+                                    </div>
+                                    <div class="volume-controls">
+                                        <button class="btn btn-icon" data-key="volumedown" title="音量减">
+                                            <i class="fas fa-volume-down"></i>
+                                        </button>
+                                        <button class="btn btn-icon" data-key="mute" title="静音">
+                                            <i class="fas fa-volume-mute"></i>
+                                        </button>
+                                        <button class="btn btn-icon" data-key="volumeup" title="音量加">
+                                            <i class="fas fa-volume-up"></i>
+                                        </button>
+                                    </div>
                                 </div>
-                                <div class="volume-controls">
-                                    <button class="btn btn-icon" data-key="volumedown" title="音量减">
-                                        <i class="fas fa-volume-down"></i>
-                                    </button>
-                                    <button class="btn btn-icon" data-key="mute" title="静音">
-                                        <i class="fas fa-volume-mute"></i>
-                                    </button>
-                                    <button class="btn btn-icon" data-key="volumeup" title="音量加">
-                                        <i class="fas fa-volume-up"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </section>
+                            </section>
 
-                        <section class="control-section input">
-                            <h2 class="section-title">文本输入</h2>
-                            <div class="input-controls">
-                                <input type="text" id="textInput" placeholder="输入要发送的文本..." class="input-field">
-                                <button id="sendTextBtn" class="btn btn-primary">
-                                    <i class="fas fa-paper-plane"></i>
-                                    发送
-                                </button>
-                            </div>
-                        </section>
+                            <section class="control-section input">
+                                <h2 class="section-title">文本输入</h2>
+                                <div class="input-controls">
+                                    <input type="text" id="textInput" placeholder="输入要发送的文本..." class="input-field">
+                                    <button id="sendTextBtn" class="btn btn-primary">
+                                        <i class="fas fa-paper-plane"></i>
+                                        发送
+                                    </button>
+                                </div>
+                            </section>
+                        </div>
 
                         <section class="control-section apps">
                             <h2 class="section-title">应用管理</h2>
                             <div class="app-controls">
-                                <div class="app-input-group">
+                                <div class="app-input-row">
                                     <input type="text" id="packageName" placeholder="应用包名" class="input-field">
                                     <button id="startAppBtn" class="btn btn-success">
                                         <i class="fas fa-play"></i>
                                         启动
                                     </button>
+                                </div>
+                                <div class="app-action-row">
                                     <button id="stopAppBtn" class="btn btn-danger">
                                         <i class="fas fa-stop"></i>
                                         停止
                                     </button>
                                 </div>
-                                <button id="listAppsBtn" class="btn btn-secondary">
+                                <button id="listAppsBtn" class="btn btn-secondary full-width">
                                     <i class="fas fa-list"></i>
                                     获取应用列表
                                 </button>

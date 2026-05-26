@@ -39,6 +39,9 @@ class AndroidRemote {
         this.loadDeviceDropdown();
         this.initSwipe();
         this.initMediaStatusPolling();
+        this.initKeyboardShortcuts();
+        // Automatically fetch screen on load
+        setTimeout(() => this.takeScreenshot(), 800);
     }
 
     initDevicesPage() {
@@ -543,6 +546,9 @@ class AndroidRemote {
     async takeScreenshot() {
         this.elements.screenshotBtn.disabled = true;
         this.elements.screenshotBtn.innerHTML = `<i class="fas fa-spinner fa-spin"></i> ${i18nInstance.t('screenshoting')}`;
+        if (this.elements.screenshotPreview) {
+            this.elements.screenshotPreview.classList.add('loading');
+        }
 
         try {
             const response = await fetch('/api/system/screenshot');
@@ -561,6 +567,9 @@ class AndroidRemote {
         } finally {
             this.elements.screenshotBtn.disabled = false;
             this.elements.screenshotBtn.innerHTML = `<i class="fas fa-camera"></i> ${i18nInstance.t('takeScreenshot')}`;
+            if (this.elements.screenshotPreview) {
+                this.elements.screenshotPreview.classList.remove('loading');
+            }
         }
     }
 
@@ -740,6 +749,8 @@ class AndroidRemote {
                     this.loadDeviceList();
                 } else {
                     this.loadDeviceDropdown();
+                    // Automatically fetch screen on device switch
+                    setTimeout(() => this.takeScreenshot(), 1000);
                 }
                 setTimeout(() => this.checkStatus(), 500);
             } else {
@@ -790,6 +801,32 @@ class AndroidRemote {
         } catch (error) {
             this.showToast(i18nInstance.t('noteSaveRequestFailed') + ': ' + error.message, 'error');
         }
+    }
+
+    initKeyboardShortcuts() {
+        document.addEventListener('keydown', (e) => {
+            const activeTag = document.activeElement.tagName;
+            if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || document.activeElement.isContentEditable) {
+                return;
+            }
+
+            const keyMap = {
+                'ArrowUp': 'up',
+                'ArrowDown': 'down',
+                'ArrowLeft': 'left',
+                'ArrowRight': 'right',
+                'Enter': 'center',
+                'Escape': 'back',
+                'Backspace': 'back',
+                'Home': 'home'
+            };
+
+            const adbKey = keyMap[e.key];
+            if (adbKey) {
+                e.preventDefault();
+                this.sendKey(adbKey);
+            }
+        });
     }
 
     showToast(message, type = 'info') {

@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -67,6 +68,10 @@ var (
 	deviceNotes     map[string]string
 	notesFile       = "device_notes.json"
 	configFile      = "device_config.json"
+
+	// Flags
+	portFlag = flag.Int("port", 8080, "服务运行端口 (Server port)")
+	adbFlag  = flag.String("adb", "adb", "ADB可执行文件路径 (Path to ADB executable)")
 )
 
 type DeviceConfig struct {
@@ -138,6 +143,7 @@ func tryReconnectLastDevice() {
 }
 
 func main() {
+	flag.Parse()
 	loadDeviceNotes()
 	tryReconnectLastDevice()
 	
@@ -164,19 +170,20 @@ func main() {
 	
 	fmt.Println("🚀 Android Remote 控制服务启动")
 	fmt.Println("📱 请确保ADB已连接设备")
-	fmt.Println("🌐 访问地址: http://localhost:8080")
+	fmt.Printf("🌐 访问地址: http://localhost:%d\n", *portFlag)
 	
-	log.Fatal(http.ListenAndServe(":8080", mux))
+	addr := fmt.Sprintf(":%d", *portFlag)
+	log.Fatal(http.ListenAndServe(addr, mux))
 }
 
 func executeADB(args ...string) (string, error) {
 	if currentDevice != "" && len(args) > 0 && args[0] != "devices" && args[0] != "connect" {
 		args = append([]string{"-s", currentDevice}, args...)
-		log.Printf("执行ADB命令: adb %s", strings.Join(args, " "))
+		log.Printf("执行ADB命令: %s %s", *adbFlag, strings.Join(args, " "))
 	} else {
-		log.Printf("执行ADB命令(无设备): adb %s", strings.Join(args, " "))
+		log.Printf("执行ADB命令(无设备): %s %s", *adbFlag, strings.Join(args, " "))
 	}
-	cmd := exec.Command("adb", args...)
+	cmd := exec.Command(*adbFlag, args...)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Printf("ADB命令失败: %s - %v", string(output), err)
@@ -428,20 +435,53 @@ func handleListApps(w http.ResponseWriter, r *http.Request) {
 	sendJSON(w, http.StatusOK, AppListResponse{Success: true, Apps: apps})
 }
 
+var commonApps = map[string]string{
+	"com.tencent.qqmusicpad":              "QQ音乐HD",
+	"com.netease.cloudmusic.tv":           "网易云音乐TV",
+	"com.dangbeimarket":                   "当贝市场",
+	"com.google.android.inputmethod.pinyin": "谷歌拼音输入法",
+	"com.ktcp.video":                      "云视听极光",
+	"com.gitvvideo.tencent":               "云视听极光",
+	"com.galaxy.tv":                       "银河奇异果",
+	"com.qiyi.video":                      "爱奇艺",
+	"com.cibn.tv":                         "CIBN酷喵",
+	"com.youku.phone":                     "优酷",
+	"tv.danmaku.bili":                     "云视听小电视",
+	"com.bilibili.app.in":                 "哔哩哔哩",
+	"com.android.settings":                "设置",
+	"com.android.browser":                 "浏览器",
+	"com.android.gallery3d":               "图库",
+	"com.android.music":                   "音乐",
+	"com.android.vending":                 "Google Play Store",
+	"com.dangbei.dblauncher":              "当贝桌面",
+	"com.dangbei.tvmaster":                "当贝助手",
+	"com.shafa.market":                    "沙发管家",
+	"com.dianshijia.live":                 "电视家",
+	"com.dianshijia.newlive":              "电视家",
+	"org.xbmc.kodi":                       "Kodi",
+	"com.mxtech.videoplayer.ad":           "MX Player",
+	"com.mxtech.videoplayer.pro":          "MX Player Pro",
+	"com.jellyfin.androidtv":              "Jellyfin",
+	"com.plexapp.android":                 "Plex",
+	"com.embymedia.embyatv":               "Emby",
+}
+
 func getAppName(pkg string) string {
 	output, err := executeADB("shell", "dumpsys", "package", pkg)
-	if err != nil {
-		return ""
-	}
-
-	for _, line := range strings.Split(output, "\n") {
-		line = strings.TrimSpace(line)
-		if strings.Contains(line, "Application Label:") {
-			parts := strings.SplitN(line, ":", 2)
-			if len(parts) == 2 {
-				return strings.TrimSpace(parts[1])
+	if err == nil {
+		for _, line := range strings.Split(output, "\n") {
+			line = strings.TrimSpace(line)
+			if strings.Contains(line, "Application Label:") {
+				parts := strings.SplitN(line, ":", 2)
+				if len(parts) == 2 {
+					return strings.TrimSpace(parts[1])
+				}
 			}
 		}
+	}
+	
+	if name, found := commonApps[pkg]; found {
+		return name
 	}
 	return ""
 }
