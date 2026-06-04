@@ -55,6 +55,10 @@
                             <input type="checkbox" id="syncActionRefresh" checked>
                             <span id="syncActionRefreshLabel">同步操作刷新屏幕</span>
                         </label>
+                        <div class="screen-size-info">
+                            <i class="fas fa-mobile-alt"></i>
+                            <span id="screenSizeInfo">--</span>
+                        </div>
                     </div>
                     <div class="screenshot-preview" id="screenshotPreview">
                         <img id="screenshotImage" src="" alt="屏幕预览" style="display: none;">
@@ -145,15 +149,15 @@
                                         </button>
                                     </div>
                                     <div class="volume-controls">
-                                        <button class="btn btn-icon" data-key="volumedown" title="音量减">
-                                            <i class="fas fa-volume-down"></i>
-                                        </button>
                                         <button class="btn btn-icon" data-key="mute" title="静音">
                                             <i class="fas fa-volume-mute"></i>
                                         </button>
-                                        <button class="btn btn-icon" data-key="volumeup" title="音量加">
-                                            <i class="fas fa-volume-up"></i>
-                                        </button>
+                                        <div class="volume-slider-container">
+                                            <i class="fas fa-volume-down volume-icon"></i>
+                                            <input type="range" id="volumeSlider" class="volume-slider" min="0" max="100" value="50">
+                                            <i class="fas fa-volume-up volume-icon"></i>
+                                            <span id="volumeValue" class="volume-value">50%</span>
+                                        </div>
                                     </div>
                                 </div>
                             </section>

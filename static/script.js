@@ -40,8 +40,11 @@ class AndroidRemote {
         this.initSwipe();
         this.initMediaStatusPolling();
         this.initKeyboardShortcuts();
-        // Automatically fetch screen on load
-        setTimeout(() => this.takeScreenshot(), 800);
+        this.initScreenshotSwipe();
+        setTimeout(() => {
+            this.takeScreenshot();
+            this.fetchScreenSize();
+        }, 800);
     }
 
     initDevicesPage() {
@@ -71,8 +74,13 @@ class AndroidRemote {
             syncActionRefresh: document.getElementById('syncActionRefresh'),
             swipePanels: document.getElementById('swipePanels'),
             swipeDots: document.getElementById('swipeDots'),
-            playPauseBtn: document.querySelector('[data-key="playpause"]')
+            playPauseBtn: document.querySelector('[data-key="playpause"]'),
+            volumeSlider: document.getElementById('volumeSlider'),
+            volumeValue: document.getElementById('volumeValue'),
+            screenSizeInfo: document.getElementById('screenSizeInfo')
         });
+        this.deviceScreenWidth = 0;
+        this.deviceScreenHeight = 0;
     }
 
     bindDeviceElements() {
@@ -131,6 +139,17 @@ class AndroidRemote {
                 this.sendKey(key);
             });
         });
+
+        this.elements.volumeSlider.addEventListener('input', (e) => {
+            this.elements.volumeValue.textContent = e.target.value + '%';
+        });
+
+        this.elements.volumeSlider.addEventListener('change', (e) => {
+            const volume = parseInt(e.target.value);
+            this.setVolume(volume);
+        });
+
+        this.initVolumeStatus();
     }
 
     bindDeviceEvents() {
@@ -417,6 +436,41 @@ class AndroidRemote {
         }
     }
 
+    async setVolume(level) {
+        try {
+            const response = await fetch('/api/system/volume', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ level: level })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                this.checkSyncRefresh();
+            } else {
+                this.showToast(data.error || '音量设置失败', 'error');
+            }
+        } catch (error) {
+            this.showToast('音量设置失败: ' + error.message, 'error');
+        }
+    }
+
+    async initVolumeStatus() {
+        try {
+            const response = await fetch('/api/system/volume/status');
+            const data = await response.json();
+
+            if (data.current !== undefined) {
+                this.elements.volumeSlider.value = data.current;
+                this.elements.volumeValue.textContent = data.current + '%';
+            }
+        } catch (error) {
+            console.error('获取音量状态失败:', error);
+        }
+    }
+
     async sendText() {
         const text = this.elements.textInput.value.trim();
         if (!text) {
@@ -540,6 +594,104 @@ class AndroidRemote {
     checkSyncRefresh() {
         if (this.elements.syncActionRefresh && this.elements.syncActionRefresh.checked) {
             setTimeout(() => this.takeScreenshot(), 500);
+        }
+    }
+
+    async fetchScreenSize() {
+        try {
+            const response = await fetch('/api/system/screen-size');
+            const data = await response.json();
+
+            if (data.success) {
+                this.deviceScreenWidth = data.width;
+                this.deviceScreenHeight = data.height;
+                if (this.elements.screenSizeInfo) {
+                    this.elements.screenSizeInfo.textContent = `${data.width}×${data.height}`;
+                }
+            }
+        } catch (error) {
+            console.error('获取屏幕尺寸失败:', error);
+        }
+    }
+
+    initScreenshotSwipe() {
+        const preview = this.elements.screenshotPreview;
+        if (!preview) return;
+
+        let startX = 0;
+        let startY = 0;
+        let isDragging = false;
+        let startTime = 0;
+
+        preview.addEventListener('touchstart', (e) => {
+            if (!this.elements.screenshotImage.src || this.elements.screenshotImage.style.display === 'none') {
+                return;
+            }
+            const touch = e.touches[0];
+            startX = touch.clientX;
+            startY = touch.clientY;
+            startTime = Date.now();
+            isDragging = true;
+        }, { passive: true });
+
+        preview.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            e.preventDefault();
+        }, { passive: false });
+
+        preview.addEventListener('touchend', (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+
+            const touch = e.changedTouches[0];
+            const endX = touch.clientX;
+            const endY = touch.clientY;
+            const deltaX = endX - startX;
+            const deltaY = endY - startY;
+            const deltaTime = Date.now() - startTime;
+
+            const minSwipeDistance = 50;
+            const maxSwipeTime = 500;
+
+            if (deltaTime > maxSwipeTime) return;
+
+            const img = this.elements.screenshotImage;
+            const rect = img.getBoundingClientRect();
+            const imgNaturalWidth = img.naturalWidth;
+            const imgNaturalHeight = img.naturalHeight;
+            const displayWidth = rect.width;
+            const displayHeight = rect.height;
+
+            const deviceStartX = Math.round((startX - rect.left) * (imgNaturalWidth / displayWidth));
+            const deviceStartY = Math.round((startY - rect.top) * (imgNaturalHeight / displayHeight));
+            const deviceEndX = Math.round((endX - rect.left) * (imgNaturalWidth / displayWidth));
+            const deviceEndY = Math.round((endY - rect.top) * (imgNaturalHeight / displayHeight));
+
+            if (Math.abs(deltaX) > minSwipeDistance && Math.abs(deltaX) > Math.abs(deltaY)) {
+                this.executeSwipe(deviceStartX, deviceStartY, deviceEndX, deviceEndY, 200);
+            } else if (Math.abs(deltaY) > minSwipeDistance && Math.abs(deltaY) > Math.abs(deltaX)) {
+                this.executeSwipe(deviceStartX, deviceStartY, deviceEndX, deviceEndY, 200);
+            }
+        }, { passive: true });
+    }
+
+    async executeSwipe(x1, y1, x2, y2, duration) {
+        try {
+            const response = await fetch('/api/system/swipe', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ x1, y1, x2, y2, duration })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                this.showToast(`滑动: (${x1},${y1}) → (${x2},${y2})`, 'success');
+                this.checkSyncRefresh();
+            } else {
+                this.showToast(data.error || '滑动失败', 'error');
+            }
+        } catch (error) {
+            this.showToast('滑动请求失败: ' + error.message, 'error');
         }
     }
 

@@ -51,6 +51,13 @@ type ScreenshotResponse struct {
 	Error    string `json:"error,omitempty"`
 }
 
+type ScreenSizeResponse struct {
+	Success bool   `json:"success"`
+	Width   int    `json:"width,omitempty"`
+	Height  int    `json:"height,omitempty"`
+	Error   string `json:"error,omitempty"`
+}
+
 type AppInfo struct {
 	Package string `json:"package"`
 	Name    string `json:"name,omitempty"`
@@ -156,6 +163,7 @@ func main() {
 	mux.HandleFunc("/api/app/stop", handleStopApp)
 	mux.HandleFunc("/api/app/list", handleListApps)
 	mux.HandleFunc("/api/system/screenshot", handleScreenshot)
+	mux.HandleFunc("/api/system/screen-size", handleScreenSize)
 	mux.HandleFunc("/api/system/swipe", handleSwipe)
 	mux.HandleFunc("/api/system/tap", handleTap)
 	mux.HandleFunc("/api/connect", handleConnect)
@@ -164,6 +172,8 @@ func main() {
 	mux.HandleFunc("/api/device/switch-mode", handleDeviceSwitchMode)
 	mux.HandleFunc("/api/device/note", handleDeviceNote)
 	mux.HandleFunc("/api/media/status", handleMediaStatus)
+	mux.HandleFunc("/api/system/volume", handleVolumeSet)
+	mux.HandleFunc("/api/system/volume/status", handleVolumeStatus)
 	
 	fs := http.FileServer(http.Dir("./static"))
 	mux.Handle("/", fs)
@@ -554,6 +564,49 @@ func handleSwipe(w http.ResponseWriter, r *http.Request) {
 	sendJSON(w, http.StatusOK, APIResponse{Success: true, Message: "滑动已执行"})
 }
 
+func handleScreenSize(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		sendJSON(w, http.StatusMethodNotAllowed, APIResponse{Error: "只支持GET请求"})
+		return
+	}
+	
+	output, err := executeADB("shell", "wm", "size")
+	if err != nil {
+		sendJSON(w, http.StatusInternalServerError, ScreenSizeResponse{Error: "获取屏幕尺寸失败: " + err.Error()})
+		return
+	}
+	
+	lines := strings.Split(strings.TrimSpace(output), "\n")
+	var sizeStr string
+	for _, line := range lines {
+		if strings.Contains(line, "Physical size:") {
+			sizeStr = strings.TrimSpace(strings.Split(line, ":")[1])
+			break
+		} else if strings.Contains(line, "Override size:") {
+			sizeStr = strings.TrimSpace(strings.Split(line, ":")[1])
+			break
+		}
+	}
+	
+	if sizeStr == "" {
+		sendJSON(w, http.StatusInternalServerError, ScreenSizeResponse{Error: "无法解析屏幕尺寸"})
+		return
+	}
+	
+	var width, height int
+	_, err = fmt.Sscanf(sizeStr, "%dx%d", &width, &height)
+	if err != nil {
+		sendJSON(w, http.StatusInternalServerError, ScreenSizeResponse{Error: "解析屏幕尺寸失败: " + err.Error()})
+		return
+	}
+	
+	sendJSON(w, http.StatusOK, ScreenSizeResponse{
+		Success: true,
+		Width:   width,
+		Height:  height,
+	})
+}
+
 func handleTap(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		sendJSON(w, http.StatusMethodNotAllowed, APIResponse{Error: "只支持POST请求"})
@@ -866,6 +919,11 @@ type MediaStatus struct {
 	Package string `json:"package,omitempty"`
 }
 
+type VolumeStatus struct {
+	Current int `json:"current"`
+	Max     int `json:"max"`
+}
+
 func handleMediaStatus(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		sendJSON(w, http.StatusMethodNotAllowed, MediaStatus{})
@@ -884,6 +942,116 @@ func handleMediaStatus(w http.ResponseWriter, r *http.Request) {
 	}
 
 	sendJSON(w, http.StatusOK, MediaStatus{Playing: playing})
+}
+
+func handleVolumeSet(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		sendJSON(w, http.StatusMethodNotAllowed, APIResponse{Error: "只支持POST请求"})
+		return
+	}
+
+	var request struct {
+		Level int `json:"level"`
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		sendJSON(w, http.StatusBadRequest, APIResponse{Error: "无效的请求格式"})
+		return
+	}
+
+	if request.Level < 0 || request.Level > 100 {
+		sendJSON(w, http.StatusBadRequest, APIResponse{Error: "音量级别必须在0-100之间"})
+		return
+	}
+
+	output, err := executeADB("shell", "cmd", "media_session", "volume", "--get", "--stream", "3")
+	if err != nil {
+		sendJSON(w, http.StatusInternalServerError, APIResponse{Error: "获取音量失败: " + err.Error()})
+		return
+	}
+
+	currentVolume := 0
+	maxVolume := 30
+	if strings.Contains(output, "volume is") {
+		parts := strings.Split(output, "volume is")
+		if len(parts) > 1 {
+			volumePart := strings.TrimSpace(parts[1])
+			fmt.Sscanf(volumePart, "%d", &currentVolume)
+		}
+	}
+
+	if strings.Contains(output, "in range") {
+		rangeParts := strings.Split(output, "in range")
+		if len(rangeParts) > 1 {
+			rangeStr := rangeParts[1]
+			if idx := strings.Index(rangeStr, ".."); idx != -1 {
+				endPart := rangeStr[idx+2:]
+				if endIdx := strings.Index(endPart, "]"); endIdx != -1 {
+					fmt.Sscanf(endPart[:endIdx], "%d", &maxVolume)
+				}
+			}
+		}
+	}
+
+	targetVolume := request.Level * maxVolume / 100
+	diff := targetVolume - currentVolume
+
+	if diff > 0 {
+		for i := 0; i < diff; i++ {
+			executeADB("shell", "input", "keyevent", "24")
+		}
+	} else if diff < 0 {
+		for i := 0; i < -diff; i++ {
+			executeADB("shell", "input", "keyevent", "25")
+		}
+	}
+
+	sendJSON(w, http.StatusOK, APIResponse{Success: true, Message: fmt.Sprintf("音量已设置为 %d%%", request.Level)})
+}
+
+func handleVolumeStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		sendJSON(w, http.StatusMethodNotAllowed, VolumeStatus{})
+		return
+	}
+
+	output, err := executeADB("shell", "cmd", "media_session", "volume", "--get", "--stream", "3")
+	if err != nil {
+		sendJSON(w, http.StatusOK, VolumeStatus{Current: 0, Max: 100})
+		return
+	}
+
+	current := 0
+	maxVolume := 30 // 默认最大值
+
+	// 解析 "volume is 7 in range [0..30]"
+	if strings.Contains(output, "volume is") {
+		parts := strings.Split(output, "volume is")
+		if len(parts) > 1 {
+			volumePart := strings.TrimSpace(parts[1])
+			// 提取当前音量值
+			fmt.Sscanf(volumePart, "%d", &current)
+		}
+	}
+
+	if strings.Contains(output, "in range") {
+		rangeParts := strings.Split(output, "in range")
+		if len(rangeParts) > 1 {
+			rangeStr := rangeParts[1]
+			// 提取 [0..30] 中的最大值
+			if idx := strings.Index(rangeStr, ".."); idx != -1 {
+				endPart := rangeStr[idx+2:]
+				if endIdx := strings.Index(endPart, "]"); endIdx != -1 {
+					fmt.Sscanf(endPart[:endIdx], "%d", &maxVolume)
+				}
+			}
+		}
+	}
+
+	// 将实际音量映射到0-100百分比
+	percentCurrent := current * 100 / maxVolume
+
+	sendJSON(w, http.StatusOK, VolumeStatus{Current: percentCurrent, Max: 100})
 }
 
 func sendJSON(w http.ResponseWriter, statusCode int, data interface{}) {

@@ -1145,6 +1145,54 @@ body {
     gap: 12px;
 }
 
+.volume-slider-container {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.volume-icon {
+    color: #666;
+    font-size: 14px;
+}
+
+.volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 120px;
+    height: 6px;
+    background: #ddd;
+    border-radius: 3px;
+    outline: none;
+    cursor: pointer;
+}
+
+.volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px;
+    height: 18px;
+    background: #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+}
+
+.volume-slider::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+    background: #007bff;
+    border-radius: 50%;
+    cursor: pointer;
+    border: none;
+}
+
+.volume-value {
+    font-size: 12px;
+    color: #666;
+    min-width: 35px;
+    text-align: center;
+}
+
 .power-controls {
     display: flex;
     flex-direction: row;
@@ -1271,6 +1319,29 @@ body {
     align-items: center;
     gap: 16px;
     flex-wrap: wrap;
+}
+
+.screen-size-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-left: auto;
+    padding: 4px 10px;
+    background: var(--background);
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--border);
+}
+
+.screen-size-info i {
+    color: var(--primary);
+    font-size: 0.9rem;
+}
+
+.screen-size-info span {
+    font-weight: 500;
+    font-family: monospace;
 }
 
 .toggle-label {
@@ -1428,14 +1499,24 @@ body {
     }
 
     .header {
-        flex-direction: row;
-        justify-content: space-between;
+        flex-direction: column;
         padding: 12px 0;
         margin-bottom: 12px;
+        gap: 8px;
     }
 
     .header-center {
-        display: none;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        order: 3;
+        width: 100%;
+    }
+
+    .header-right {
+        order: 2;
+        width: 100%;
+        justify-content: flex-end;
     }
 
     .logo h1 {
@@ -1529,6 +1610,15 @@ body {
         background: var(--primary);
         width: 24px;
         border-radius: 4px;
+    }
+
+    .device-dropdown {
+        flex: 1;
+        min-width: 0;
+    }
+
+    .manage-devices-link {
+        white-space: nowrap;
     }
 
     .input-group .input-field {
