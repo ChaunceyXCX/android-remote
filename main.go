@@ -1,6 +1,8 @@
 package main
 
 import (
+	"context"
+	"encoding/binary"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -8,9 +10,13 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"os/signal"
 	"strings"
 	"sync"
+	"syscall"
 	"time"
+
+	"nhooyr.io/websocket"
 )
 
 type DeviceStatus struct {
@@ -75,10 +81,11 @@ var (
 	deviceNotes     map[string]string
 	notesFile       = "device_notes.json"
 	configFile      = "device_config.json"
-
-	// Flags
-	portFlag = flag.Int("port", 8080, "服务运行端口 (Server port)")
-	adbFlag  = flag.String("adb", "adb", "ADB可执行文件路径 (Path to ADB executable)")
+	scrcpyClient    *ScrcpyClient
+	videoHub        *VideoHub
+	lastMirrorError error
+	portFlag        = flag.Int("port", 8080, "HTTP服务端口")
+	adbFlag         = flag.String("adb", "adb", "ADB命令路径")
 )
 
 type DeviceConfig struct {
@@ -174,6 +181,10 @@ func main() {
 	mux.HandleFunc("/api/media/status", handleMediaStatus)
 	mux.HandleFunc("/api/system/volume", handleVolumeSet)
 	mux.HandleFunc("/api/system/volume/status", handleVolumeStatus)
+	mux.HandleFunc("/api/screen/stream", handleStream)
+	mux.HandleFunc("/api/screen/mirror/start", handleMirrorStart)
+	mux.HandleFunc("/api/screen/mirror/stop", handleMirrorStop)
+	mux.HandleFunc("/api/screen/mirror/status", handleMirrorStatus)
 	
 	fs := http.FileServer(http.Dir("./static"))
 	mux.Handle("/", fs)
@@ -183,7 +194,33 @@ func main() {
 	fmt.Printf("🌐 访问地址: http://localhost:%d\n", *portFlag)
 	
 	addr := fmt.Sprintf(":%d", *portFlag)
-	log.Fatal(http.ListenAndServe(addr, mux))
+	server := &http.Server{Addr: addr, Handler: mux}
+
+	sigChan := make(chan os.Signal, 1)
+	signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigChan
+		log.Printf("收到信号 %v，正在清理...", sig)
+
+		if scrcpyClient != nil && scrcpyClient.State() == StateRunning {
+			log.Printf("停止 scrcpy 会话")
+			scrcpyClient.Stop()
+		}
+
+		log.Printf("清理端口转发")
+		executeADB("forward", "--remove-all")
+		executeADB("forward", "--remove-all")
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+		server.Shutdown(ctx)
+
+		log.Println("清理完成")
+		os.Exit(0)
+	}()
+
+	log.Fatal(server.ListenAndServe())
 }
 
 func executeADB(args ...string) (string, error) {
@@ -768,6 +805,11 @@ func handleDeviceSwitch(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	
+	if scrcpyClient != nil && scrcpyClient.State() == StateRunning {
+		log.Printf("切换设备前停止 scrcpy 会话")
+		scrcpyClient.Stop()
+	}
+	
 	currentDevice = request.DeviceID
 	saveDeviceConfig()
 	log.Printf("切换到设备: %s", currentDevice)
@@ -1058,4 +1100,151 @@ func sendJSON(w http.ResponseWriter, statusCode int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(data)
+}
+
+func handleStream(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		sendJSON(w, http.StatusMethodNotAllowed, APIResponse{Error: "只支持GET请求"})
+		return
+	}
+
+	if scrcpyClient == nil || scrcpyClient.State() != StateRunning {
+		sendJSON(w, http.StatusServiceUnavailable, APIResponse{Error: "屏幕镜像未启动"})
+		return
+	}
+
+	conn, err := websocket.Accept(w, r, &websocket.AcceptOptions{
+		InsecureSkipVerify: true,
+	})
+	if err != nil {
+		log.Printf("WebSocket升级失败: %v", err)
+		return
+	}
+	defer conn.Close(websocket.StatusNormalClosure, "")
+
+	ch := videoHub.Subscribe()
+	defer videoHub.Unsubscribe(ch)
+
+	ctx := conn.CloseRead(r.Context())
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case packet, ok := <-ch:
+			if !ok {
+				return
+			}
+			// 构建 12 字节头部 + NAL 数据
+			// 格式: [8B PTS+flags] [4B size]
+			ptsFlags := uint64(packet.PTS) & 0x3FFFFFFFFFFFFFFF
+			if packet.Type == PacketConfig {
+				ptsFlags |= (1 << 63)
+			} else if packet.Type == PacketKeyframe {
+				ptsFlags |= (1 << 62)
+			}
+			fullPacket := make([]byte, 12+len(packet.Data))
+			binary.BigEndian.PutUint64(fullPacket[0:8], ptsFlags)
+			binary.BigEndian.PutUint32(fullPacket[8:12], uint32(len(packet.Data)))
+			copy(fullPacket[12:], packet.Data)
+
+			err := conn.Write(ctx, websocket.MessageBinary, fullPacket)
+			if err != nil {
+				log.Printf("WebSocket写入失败: %v", err)
+				return
+			}
+		}
+	}
+}
+
+type MirrorStatusResponse struct {
+	Success bool   `json:"success"`
+	State   string `json:"state,omitempty"`
+	Width   int    `json:"width,omitempty"`
+	Height  int    `json:"height,omitempty"`
+	Error   string `json:"error,omitempty"`
+}
+
+func handleMirrorStart(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		sendJSON(w, http.StatusMethodNotAllowed, APIResponse{Error: "只支持POST请求"})
+		return
+	}
+
+	if currentDevice == "" {
+		sendJSON(w, http.StatusBadRequest, APIResponse{Error: "未连接设备"})
+		return
+	}
+
+	if scrcpyClient != nil && scrcpyClient.State() == StateRunning {
+		sendJSON(w, http.StatusOK, APIResponse{Success: true, Message: "镜像已在运行"})
+		return
+	}
+
+	videoHub = NewVideoHub()
+	scrcpyClient = NewScrcpyClient(currentDevice, *adbFlag, videoHub)
+	lastMirrorError = nil
+
+	// 异步启动，避免阻塞 HTTP handler
+	go func() {
+		if err := scrcpyClient.Start(); err != nil {
+			log.Printf("启动scrcpy失败: %v", err)
+			lastMirrorError = err
+		}
+	}()
+
+	sendJSON(w, http.StatusOK, MirrorStatusResponse{
+		Success: true,
+		State:   "starting",
+	})
+}
+
+func handleMirrorStop(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		sendJSON(w, http.StatusMethodNotAllowed, APIResponse{Error: "只支持POST请求"})
+		return
+	}
+
+	if scrcpyClient == nil {
+		sendJSON(w, http.StatusOK, APIResponse{Success: true, Message: "镜像未运行"})
+		return
+	}
+
+	scrcpyClient.Stop()
+	scrcpyClient = nil
+	sendJSON(w, http.StatusOK, APIResponse{Success: true, Message: "镜像已停止"})
+}
+
+func handleMirrorStatus(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		sendJSON(w, http.StatusMethodNotAllowed, APIResponse{Error: "只支持GET请求"})
+		return
+	}
+
+	if scrcpyClient == nil {
+		state := "idle"
+		errMsg := ""
+		if lastMirrorError != nil {
+			state = "error"
+			errMsg = lastMirrorError.Error()
+		}
+		sendJSON(w, http.StatusOK, MirrorStatusResponse{
+			Success: true,
+			State:   state,
+			Error:   errMsg,
+		})
+		return
+	}
+
+	header := scrcpyClient.StreamHeader()
+	resp := MirrorStatusResponse{
+		Success: true,
+		State:   scrcpyClient.State().String(),
+		Width:   int(header.Width),
+		Height:  int(header.Height),
+	}
+	if scrcpyClient.State() == StateError && lastMirrorError != nil {
+		resp.Error = lastMirrorError.Error()
+	}
+	sendJSON(w, http.StatusOK, resp)
 }
