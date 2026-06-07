@@ -77,10 +77,14 @@ class AndroidRemote {
             playPauseBtn: document.querySelector('[data-key="playpause"]'),
             volumeSlider: document.getElementById('volumeSlider'),
             volumeValue: document.getElementById('volumeValue'),
-            screenSizeInfo: document.getElementById('screenSizeInfo')
+            screenSizeInfo: document.getElementById('screenSizeInfo'),
+            mirrorCanvas: document.getElementById('mirrorCanvas'),
+            mirrorStatus: document.getElementById('mirrorStatus')
         });
         this.deviceScreenWidth = 0;
         this.deviceScreenHeight = 0;
+        this.scrcpyPlayer = null;
+        this.mirrorMode = false;
     }
 
     bindDeviceElements() {
@@ -101,7 +105,7 @@ class AndroidRemote {
         this.elements.startAppBtn.addEventListener('click', () => this.startApp());
         this.elements.stopAppBtn.addEventListener('click', () => this.stopApp());
         this.elements.listAppsBtn.addEventListener('click', () => this.listApps());
-        this.elements.screenshotBtn.addEventListener('click', () => this.takeScreenshot());
+        this.elements.screenshotBtn.addEventListener('click', () => this.toggleMirrorMode());
         this.elements.screenshotPreview.addEventListener('click', (e) => this.handleScreenshotClick(e));
 
         const savedClickToTap = localStorage.getItem('clickToTap');
@@ -725,6 +729,155 @@ class AndroidRemote {
         }
     }
 
+    async toggleMirrorMode() {
+        if (this.mirrorMode) {
+            await this.stopMirror();
+        } else {
+            await this.startMirror();
+        }
+    }
+
+    async startMirror() {
+        try {
+            this.elements.screenshotBtn.disabled = true;
+            this.elements.screenshotBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 启动镜像...';
+            this.updateMirrorStatus('connecting', '连接中...');
+
+            const response = await fetch('/api/screen/mirror/start', { method: 'POST' });
+            const data = await response.json();
+
+            if (!data.success) {
+                this.updateMirrorStatus('error', '启动失败');
+                this.showScreenshotMode();
+                this.showToast('镜像不可用，已切换到截屏模式', 'warning');
+                return;
+            }
+
+            // 异步启动：轮询等待 scrcpy-server 就绪
+            this.updateMirrorStatus('connecting', '正在启动 scrcpy...');
+            const status = await this.waitForMirrorReady(30000);
+
+            if (!status || status.state === 'error') {
+                const errMsg = status?.error || '启动超时';
+                this.updateMirrorStatus('error', '启动失败');
+                this.showScreenshotMode();
+                this.showToast('镜像启动失败: ' + errMsg, 'error');
+                return;
+            }
+
+            this.mirrorMode = true;
+            this.elements.screenshotImage.style.display = 'none';
+            this.elements.mirrorCanvas.style.display = 'block';
+            this.elements.screenshotPlaceholder.style.display = 'none';
+
+            this.scrcpyPlayer = new ScrcpyPlayer(this.elements.mirrorCanvas);
+            this.scrcpyPlayer.onStateChange = (state) => {
+                console.log('镜像状态:', state);
+                if (state === 'connected') {
+                    this.updateMirrorStatus('connected', '已连接');
+                } else if (state === 'disconnected') {
+                    this.updateMirrorStatus('disconnected', '已断开');
+                }
+            };
+            this.scrcpyPlayer.onError = (error) => {
+                console.error('镜像错误:', error);
+                this.updateMirrorStatus('error', '连接失败');
+                this.showToast('镜像连接失败', 'error');
+            };
+
+            await this.scrcpyPlayer.connect();
+
+            this.mirrorClickHandler = (e) => this.handleMirrorClick(e);
+            this.elements.mirrorCanvas.addEventListener('click', this.mirrorClickHandler);
+
+            this.elements.screenshotBtn.innerHTML = '<i class="fas fa-stop"></i> 停止镜像';
+            this.showToast('实时镜像已启动', 'success');
+        } catch (error) {
+            console.error('启动镜像异常:', error);
+            this.updateMirrorStatus('error', '连接失败');
+            this.showScreenshotMode();
+            this.showToast('镜像不可用，已切换到截屏模式', 'warning');
+        } finally {
+            this.elements.screenshotBtn.disabled = false;
+        }
+    }
+
+    async waitForMirrorReady(timeout) {
+        const startTime = Date.now();
+        const pollInterval = 500;
+
+        while (Date.now() - startTime < timeout) {
+            try {
+                const resp = await fetch('/api/screen/mirror/status');
+                const data = await resp.json();
+
+                if (data.state === 'running') {
+                    return data;
+                }
+                if (data.state === 'error') {
+                    return data;
+                }
+            } catch (e) {
+                // 忽略轮询错误，继续等待
+            }
+            await new Promise(r => setTimeout(r, pollInterval));
+        }
+        return null;
+    }
+
+    showScreenshotMode() {
+        this.mirrorMode = false;
+        this.elements.screenshotBtn.innerHTML = '<i class="fas fa-play"></i> 启动镜像';
+        this.elements.screenshotBtn.style.display = 'inline-flex';
+        this.elements.screenshotImage.style.display = 'block';
+        this.elements.mirrorCanvas.style.display = 'none';
+        this.elements.screenshotPlaceholder.style.display = 'block';
+    }
+
+    async stopMirror() {
+        try {
+            this.elements.screenshotBtn.disabled = true;
+            this.elements.screenshotBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> 停止镜像...';
+
+            if (this.mirrorClickHandler) {
+                this.elements.mirrorCanvas.removeEventListener('click', this.mirrorClickHandler);
+                this.mirrorClickHandler = null;
+            }
+
+            if (this.scrcpyPlayer) {
+                this.scrcpyPlayer.destroy();
+                this.scrcpyPlayer = null;
+            }
+
+            const response = await fetch('/api/screen/mirror/stop', { method: 'POST' });
+            const data = await response.json();
+
+            this.mirrorMode = false;
+            this.elements.mirrorCanvas.style.display = 'none';
+            this.elements.screenshotPlaceholder.style.display = 'block';
+
+            this.elements.screenshotBtn.innerHTML = '<i class="fas fa-play"></i> 启动镜像';
+            this.updateMirrorStatus('disconnected', '未连接');
+            this.showToast('镜像已停止', 'success');
+        } catch (error) {
+            this.showToast('停止镜像失败: ' + error.message, 'error');
+        } finally {
+            this.elements.screenshotBtn.disabled = false;
+        }
+    }
+
+    updateMirrorStatus(state, text) {
+        if (!this.elements.mirrorStatus) return;
+        const dot = this.elements.mirrorStatus.querySelector('.status-dot');
+        const label = this.elements.mirrorStatus.querySelector('.status-text');
+        if (dot) {
+            dot.className = 'status-dot ' + state;
+        }
+        if (label) {
+            label.textContent = text;
+        }
+    }
+
     handleScreenshotClick(e) {
         if (!this.elements.screenshotImage.src || this.elements.screenshotImage.style.display === 'none') {
             return;
@@ -743,6 +896,45 @@ class AndroidRemote {
 
         const deviceX = Math.round(clickX * (imgNaturalWidth / displayWidth));
         const deviceY = Math.round(clickY * (imgNaturalHeight / displayHeight));
+
+        this.showClickIndicator(clickX, clickY);
+
+        if (this.elements.clickToTap.checked) {
+            this.executeTap(deviceX, deviceY);
+        } else {
+            this.elements.tapX.value = deviceX;
+            this.elements.tapY.value = deviceY;
+            this.showToast(`${i18nInstance.t('coordFilled')}: (${deviceX}, ${deviceY})`, 'info');
+        }
+    }
+
+    handleMirrorClick(e) {
+        const canvas = this.elements.mirrorCanvas;
+        if (!canvas || canvas.style.display === 'none') return;
+
+        const rect = canvas.getBoundingClientRect();
+        const displayWidth = rect.width;
+        const displayHeight = rect.height;
+
+        if (displayWidth === 0 || displayHeight === 0) return;
+
+        const deviceWidth = this.deviceScreenWidth;
+        const deviceHeight = this.deviceScreenHeight;
+
+        if (deviceWidth === 0 || deviceHeight === 0) {
+            this.showToast('设备屏幕尺寸未知，无法映射坐标', 'warning');
+            return;
+        }
+
+        const clickX = e.clientX - rect.left;
+        const clickY = e.clientY - rect.top;
+
+        const deviceX = Math.round(clickX * (deviceWidth / displayWidth));
+        const deviceY = Math.round(clickY * (deviceHeight / displayHeight));
+
+        if (deviceX < 0 || deviceX > deviceWidth || deviceY < 0 || deviceY > deviceHeight) {
+            return;
+        }
 
         this.showClickIndicator(clickX, clickY);
 
@@ -887,6 +1079,10 @@ class AndroidRemote {
 
     async switchDevice(deviceId) {
         try {
+            if (this.mirrorMode) {
+                await this.stopMirror();
+            }
+
             const response = await fetch('/api/device/switch', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -901,7 +1097,6 @@ class AndroidRemote {
                     this.loadDeviceList();
                 } else {
                     this.loadDeviceDropdown();
-                    // Automatically fetch screen on device switch
                     setTimeout(() => this.takeScreenshot(), 1000);
                 }
                 setTimeout(() => this.checkStatus(), 500);

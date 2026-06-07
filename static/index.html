@@ -44,9 +44,13 @@
                 <div class="screenshot-controls">
                     <div class="screenshot-header">
                         <button id="screenshotBtn" class="btn btn-primary">
-                            <i class="fas fa-camera"></i>
-                            获取屏幕
+                            <i class="fas fa-play"></i>
+                            启动镜像
                         </button>
+                        <div class="mirror-status" id="mirrorStatus">
+                            <span class="status-dot"></span>
+                            <span class="status-text">未连接</span>
+                        </div>
                         <label class="toggle-label">
                             <input type="checkbox" id="clickToTap" checked>
                             <span id="clickToTapLabel">点击屏幕直接触摸</span>
@@ -62,6 +66,7 @@
                     </div>
                     <div class="screenshot-preview" id="screenshotPreview">
                         <img id="screenshotImage" src="" alt="屏幕预览" style="display: none;">
+                        <canvas id="mirrorCanvas" style="display: none;"></canvas>
                         <div class="placeholder" id="screenshotPlaceholder">
                             <i class="fas fa-image"></i>
                             <span>屏幕画面将显示在这里</span>
@@ -219,6 +224,7 @@
 
     <div class="toast" id="toast"></div>
     <script src="i18n.js"></script>
+    <script src="scrcpy-player.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
